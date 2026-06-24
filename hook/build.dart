@@ -173,7 +173,11 @@ Future<void> _build(BuildInput input, BuildOutputBuilder output) async {
 // 代码资产注册
 // ---------------------------------------------------------------------------
 
-void _registerAsset(BuildOutputBuilder output, String packageName, Uri fileUri) {
+void _registerAsset(
+  BuildOutputBuilder output,
+  String packageName,
+  Uri fileUri,
+) {
   final asset = CodeAsset(
     package: packageName,
     name: 'src/ffi_bind.dart',
@@ -191,9 +195,7 @@ void _addDependencies(BuildOutputBuilder output, Directory rsCoreDir) {
   output.dependencies.add(rsCoreDir.uri.resolve('Cargo.toml'));
   output.dependencies.add(rsCoreDir.uri.resolve('build.rs'));
   // hook 自身也是依赖
-  output.dependencies.add(
-    rsCoreDir.uri.resolve('../../hook/build.dart'),
-  );
+  output.dependencies.add(rsCoreDir.uri.resolve('../../hook/build.dart'));
 }
 
 // ---------------------------------------------------------------------------
@@ -214,9 +216,7 @@ String _mapRustTarget(OS os, Architecture arch, CodeConfig codeConfig) {
         case Architecture.riscv64:
           return 'riscv64-linux-android';
         default:
-          throw ArgumentError(
-            'Unsupported Android architecture: ${arch.name}',
-          );
+          throw ArgumentError('Unsupported Android architecture: ${arch.name}');
       }
 
     case OS.iOS:
@@ -225,15 +225,11 @@ String _mapRustTarget(OS os, Architecture arch, CodeConfig codeConfig) {
       final isSimulator = sdk == IOSSdk.simulator;
       switch (arch) {
         case Architecture.arm64:
-          return isSimulator
-              ? 'aarch64-apple-ios-sim'
-              : 'aarch64-apple-ios';
+          return isSimulator ? 'aarch64-apple-ios-sim' : 'aarch64-apple-ios';
         case Architecture.x64:
           return 'x86_64-apple-ios';
         default:
-          throw ArgumentError(
-            'Unsupported iOS architecture: ${arch.name}',
-          );
+          throw ArgumentError('Unsupported iOS architecture: ${arch.name}');
       }
 
     case OS.macOS:
@@ -243,9 +239,7 @@ String _mapRustTarget(OS os, Architecture arch, CodeConfig codeConfig) {
         case Architecture.x64:
           return 'x86_64-apple-darwin';
         default:
-          throw ArgumentError(
-            'Unsupported macOS architecture: ${arch.name}',
-          );
+          throw ArgumentError('Unsupported macOS architecture: ${arch.name}');
       }
 
     case OS.windows:
@@ -255,9 +249,7 @@ String _mapRustTarget(OS os, Architecture arch, CodeConfig codeConfig) {
         case Architecture.arm64:
           return 'aarch64-pc-windows-msvc';
         default:
-          throw ArgumentError(
-            'Unsupported Windows architecture: ${arch.name}',
-          );
+          throw ArgumentError('Unsupported Windows architecture: ${arch.name}');
       }
 
     case OS.linux:
@@ -267,9 +259,7 @@ String _mapRustTarget(OS os, Architecture arch, CodeConfig codeConfig) {
         case Architecture.arm64:
           return 'aarch64-unknown-linux-gnu';
         default:
-          throw ArgumentError(
-            'Unsupported Linux architecture: ${arch.name}',
-          );
+          throw ArgumentError('Unsupported Linux architecture: ${arch.name}');
       }
 
     case OS.fuchsia:
@@ -403,7 +393,9 @@ Future<void> _checkRustToolchain() async {
     _error('');
     _error('📦 安装指引:');
     _error('  macOS / Linux:');
-    _error('    curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh');
+    _error(
+      '    curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh',
+    );
     _error('  Windows:');
     _error('    Download from https://rustup.rs/');
     _error('');
@@ -426,7 +418,9 @@ Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
     _error('📦 安装指引:');
     _error('  1. Install Android NDK via Android SDK Manager');
     _error('  2. Set ANDROID_NDK_HOME environment variable, e.g.:');
-    _error('     export ANDROID_NDK_HOME=\$HOME/Library/Android/sdk/ndk/<version>');
+    _error(
+      '     export ANDROID_NDK_HOME=\$HOME/Library/Android/sdk/ndk/<version>',
+    );
     _error('');
     _error('Or set ANDROID_NDK_PATH to the NDK root directory.');
     throw Exception(
@@ -442,8 +436,7 @@ Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
 
   // 构建 NDK 环境变量
   final env = <String, String>{};
-  final toolchain =
-      '$ndkHome/toolchains/llvm/prebuilt/${_hostTag()}/bin';
+  final toolchain = '$ndkHome/toolchains/llvm/prebuilt/${_hostTag()}/bin';
   final clangPrefix = _androidClangPrefix(rustTarget);
 
   if (clangPrefix != null) {
@@ -491,10 +484,7 @@ Future<void> _checkAppleTools(OS os) async {
 /// Ensures a Rust target is installed via rustup.
 Future<void> _ensureRustTarget(String target) async {
   try {
-    final result = await Process.run(
-      'rustup',
-      ['target', 'add', target],
-    );
+    final result = await Process.run('rustup', ['target', 'add', target]);
     if (result.exitCode == 0) {
       final out = result.stdout.toString().trim();
       if (out.isNotEmpty && !out.contains('already')) {

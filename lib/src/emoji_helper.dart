@@ -24,7 +24,11 @@ import 'package:flutter/foundation.dart';
 ///
 /// 使用 [ImageDescriptor.raw] + [ImmutableBuffer] 新 API，
 /// 兼容 Flutter >=3.41.0。
-Future<ui.Image> rgbaBytesToImage(Uint8List pixels, int width, int height) async {
+Future<ui.Image> rgbaBytesToImage(
+  Uint8List pixels,
+  int width,
+  int height,
+) async {
   if (width <= 0 || height <= 0) {
     throw ArgumentError('Invalid image dimensions: ${width}x$height');
   }
@@ -82,9 +86,7 @@ Future<ui.Image> rgbaBytesToImage(Uint8List pixels, int width, int height) async
 ///
 /// 使用 [ui.Image.toByteData] 接口，兼容 Flutter >=3.41.0。
 Future<Uint8List> imageToRgbaBytes(ui.Image image) async {
-  final byteData = await image.toByteData(
-    format: ui.ImageByteFormat.rawRgba,
-  );
+  final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
 
   if (byteData == null) {
     throw StateError('Failed to convert image to RGBA bytes');

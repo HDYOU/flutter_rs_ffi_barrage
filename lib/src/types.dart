@@ -77,12 +77,7 @@ class StrokeConfig {
     Color color = const Color(0xFF000000),
     bool isOuter = true,
   }) =>
-      StrokeConfig(
-        enabled: true,
-        width: width,
-        color: color,
-        isOuter: isOuter,
-      );
+      StrokeConfig(enabled: true, width: width, color: color, isOuter: isOuter);
 }
 
 /// 阴影效果配置
@@ -124,15 +119,14 @@ class ShadowConfig {
     double blur = 0.0,
     Color color = const Color(0x80000000),
     int layers = 1,
-  }) =>
-      ShadowConfig(
-        enabled: true,
-        offsetX: offsetX,
-        offsetY: offsetY,
-        blur: blur,
-        color: color,
-        layers: layers,
-      );
+  }) => ShadowConfig(
+    enabled: true,
+    offsetX: offsetX,
+    offsetY: offsetY,
+    blur: blur,
+    color: color,
+    layers: layers,
+  );
 }
 
 /// 霓虹发光效果配置
@@ -167,14 +161,13 @@ class NeonConfig {
     Color color = const Color(0xFFFF00FF),
     double intensity = 0.8,
     int layers = 3,
-  }) =>
-      NeonConfig(
-        enabled: true,
-        radius: radius,
-        color: color,
-        intensity: intensity,
-        layers: layers,
-      );
+  }) => NeonConfig(
+    enabled: true,
+    radius: radius,
+    color: color,
+    intensity: intensity,
+    layers: layers,
+  );
 }
 
 /// 渐变填充配置
@@ -210,13 +203,7 @@ class GradientConfig {
     GradientType type = GradientType.linear,
     List<Color> colors = const [Color(0xFFFF0000), Color(0xFF0000FF)],
     double angle = 0.0,
-  }) =>
-      GradientConfig(
-        enabled: true,
-        type: type,
-        colors: colors,
-        angle: angle,
-      );
+  }) => GradientConfig(enabled: true, type: type, colors: colors, angle: angle);
 }
 
 /// 文字特效组合配置
@@ -322,8 +309,8 @@ class EmojiBitmapResult {
     required this.height,
     required this.pixels,
   }) : assert(
-          pixels.length == width * height * 4,
-          'pixels length (${pixels.length}) must equal width * height * 4 '
-          '(${width * height * 4})',
-        );
+         pixels.length == width * height * 4,
+         'pixels length (${pixels.length}) must equal width * height * 4 '
+         '(${width * height * 4})',
+       );
 }

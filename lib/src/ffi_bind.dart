@@ -53,24 +53,26 @@ typedef _EngineHandle = Opaque;
 /// - [outPixelLen]: 输出 - 像素数据字节长度
 ///
 /// 返回值：true 表示成功获取位图，false 表示失败。
-typedef _EmojiBitmapCallbackNative = Bool Function(
-  Pointer<Uint8> emojiText,
-  Uint64 textLen,
-  Pointer<Uint32> outWidth,
-  Pointer<Uint32> outHeight,
-  Pointer<Pointer<Uint8>> outPixels,
-  Pointer<Uint64> outPixelLen,
-);
+typedef _EmojiBitmapCallbackNative =
+    Bool Function(
+      Pointer<Uint8> emojiText,
+      Uint64 textLen,
+      Pointer<Uint32> outWidth,
+      Pointer<Uint32> outHeight,
+      Pointer<Pointer<Uint8>> outPixels,
+      Pointer<Uint64> outPixelLen,
+    );
 
 /// Emoji 位图请求回调的 Dart 签名
-typedef _EmojiBitmapCallbackDart = bool Function(
-  Pointer<Uint8> emojiText,
-  int textLen,
-  Pointer<Uint32> outWidth,
-  Pointer<Uint32> outHeight,
-  Pointer<Pointer<Uint8>> outPixels,
-  Pointer<Uint64> outPixelLen,
-);
+typedef _EmojiBitmapCallbackDart =
+    bool Function(
+      Pointer<Uint8> emojiText,
+      int textLen,
+      Pointer<Uint32> outWidth,
+      Pointer<Uint32> outHeight,
+      Pointer<Pointer<Uint8>> outPixels,
+      Pointer<Uint64> outPixelLen,
+    );
 
 // ---------------------------------------------------------------------------
 // 引擎生命周期 FFI 签名
@@ -86,30 +88,30 @@ typedef _EmojiBitmapCallbackDart = bool Function(
 ///   float    speed,
 /// );
 /// ```
-typedef _BarrageEngineCreateNative = Pointer<_EngineHandle> Function(
-  Uint32 width,
-  Uint32 height,
-  Float fontRatio,
-  Float speed,
-);
-typedef _BarrageEngineCreateDart = Pointer<_EngineHandle> Function(
-  int width,
-  int height,
-  double fontRatio,
-  double speed,
-);
+typedef _BarrageEngineCreateNative =
+    Pointer<_EngineHandle> Function(
+      Uint32 width,
+      Uint32 height,
+      Float fontRatio,
+      Float speed,
+    );
+typedef _BarrageEngineCreateDart =
+    Pointer<_EngineHandle> Function(
+      int width,
+      int height,
+      double fontRatio,
+      double speed,
+    );
 
 /// 销毁弹幕引擎
 ///
 /// ```c
 /// void barrage_engine_destroy(void* engine);
 /// ```
-typedef _BarrageEngineDestroyNative = Void Function(
-  Pointer<_EngineHandle> engine,
-);
-typedef _BarrageEngineDestroyDart = void Function(
-  Pointer<_EngineHandle> engine,
-);
+typedef _BarrageEngineDestroyNative =
+    Void Function(Pointer<_EngineHandle> engine);
+typedef _BarrageEngineDestroyDart =
+    void Function(Pointer<_EngineHandle> engine);
 
 // ---------------------------------------------------------------------------
 // 引擎控制 FFI 签名
@@ -124,16 +126,10 @@ typedef _BarrageEngineDestroyDart = void Function(
 ///   uint32_t height,
 /// );
 /// ```
-typedef _BarrageEngineResizeNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Uint32 width,
-  Uint32 height,
-);
-typedef _BarrageEngineResizeDart = void Function(
-  Pointer<_EngineHandle> engine,
-  int width,
-  int height,
-);
+typedef _BarrageEngineResizeNative =
+    Void Function(Pointer<_EngineHandle> engine, Uint32 width, Uint32 height);
+typedef _BarrageEngineResizeDart =
+    void Function(Pointer<_EngineHandle> engine, int width, int height);
 
 /// 设置弹幕滚动速度倍率
 ///
@@ -143,38 +139,28 @@ typedef _BarrageEngineResizeDart = void Function(
 ///   float speed,
 /// );
 /// ```
-typedef _BarrageEngineSetSpeedNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Float speed,
-);
-typedef _BarrageEngineSetSpeedDart = void Function(
-  Pointer<_EngineHandle> engine,
-  double speed,
-);
+typedef _BarrageEngineSetSpeedNative =
+    Void Function(Pointer<_EngineHandle> engine, Float speed);
+typedef _BarrageEngineSetSpeedDart =
+    void Function(Pointer<_EngineHandle> engine, double speed);
 
 /// 暂停弹幕
 ///
 /// ```c
 /// void barrage_engine_pause(void* engine);
 /// ```
-typedef _BarrageEnginePauseNative = Void Function(
-  Pointer<_EngineHandle> engine,
-);
-typedef _BarrageEnginePauseDart = void Function(
-  Pointer<_EngineHandle> engine,
-);
+typedef _BarrageEnginePauseNative =
+    Void Function(Pointer<_EngineHandle> engine);
+typedef _BarrageEnginePauseDart = void Function(Pointer<_EngineHandle> engine);
 
 /// 恢复弹幕
 ///
 /// ```c
 /// void barrage_engine_resume(void* engine);
 /// ```
-typedef _BarrageEngineResumeNative = Void Function(
-  Pointer<_EngineHandle> engine,
-);
-typedef _BarrageEngineResumeDart = void Function(
-  Pointer<_EngineHandle> engine,
-);
+typedef _BarrageEngineResumeNative =
+    Void Function(Pointer<_EngineHandle> engine);
+typedef _BarrageEngineResumeDart = void Function(Pointer<_EngineHandle> engine);
 
 /// 跳转到指定时间点
 ///
@@ -184,26 +170,19 @@ typedef _BarrageEngineResumeDart = void Function(
 ///   uint64_t timestamp_ms,
 /// );
 /// ```
-typedef _BarrageEngineSeekNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Uint64 timestampMs,
-);
-typedef _BarrageEngineSeekDart = void Function(
-  Pointer<_EngineHandle> engine,
-  int timestampMs,
-);
+typedef _BarrageEngineSeekNative =
+    Void Function(Pointer<_EngineHandle> engine, Uint64 timestampMs);
+typedef _BarrageEngineSeekDart =
+    void Function(Pointer<_EngineHandle> engine, int timestampMs);
 
 /// 清空所有弹幕
 ///
 /// ```c
 /// void barrage_engine_clear(void* engine);
 /// ```
-typedef _BarrageEngineClearNative = Void Function(
-  Pointer<_EngineHandle> engine,
-);
-typedef _BarrageEngineClearDart = void Function(
-  Pointer<_EngineHandle> engine,
-);
+typedef _BarrageEngineClearNative =
+    Void Function(Pointer<_EngineHandle> engine);
+typedef _BarrageEngineClearDart = void Function(Pointer<_EngineHandle> engine);
 
 // ---------------------------------------------------------------------------
 // 弹幕推送 FFI 签名
@@ -251,76 +230,78 @@ typedef _BarrageEngineClearDart = void Function(
 ///   float          gradient_angle,
 /// );
 /// ```
-typedef _BarrageEnginePushNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> id,
-  Uint64 idLen,
-  Pointer<Uint8> text,
-  Uint64 textLen,
-  Uint32 trackType,
-  Uint32 color,
-  Float fontSize,
-  Uint64 timestampMs,
-  // stroke
-  Uint8 strokeEnabled,
-  Float strokeWidth,
-  Uint32 strokeColor,
-  Uint8 strokeOuter,
-  // shadow
-  Uint8 shadowEnabled,
-  Float shadowOffsetX,
-  Float shadowOffsetY,
-  Float shadowBlur,
-  Uint32 shadowColor,
-  Uint32 shadowLayers,
-  // neon
-  Uint8 neonEnabled,
-  Float neonRadius,
-  Uint32 neonColor,
-  Float neonIntensity,
-  Uint32 neonLayers,
-  // gradient
-  Uint8 gradientEnabled,
-  Uint32 gradientType,
-  Pointer<Uint32> gradientColors,
-  Uint32 gradientColorCount,
-  Float gradientAngle,
-);
-typedef _BarrageEnginePushDart = void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> id,
-  int idLen,
-  Pointer<Uint8> text,
-  int textLen,
-  int trackType,
-  int color,
-  double fontSize,
-  int timestampMs,
-  // stroke
-  int strokeEnabled,
-  double strokeWidth,
-  int strokeColor,
-  int strokeOuter,
-  // shadow
-  int shadowEnabled,
-  double shadowOffsetX,
-  double shadowOffsetY,
-  double shadowBlur,
-  int shadowColor,
-  int shadowLayers,
-  // neon
-  int neonEnabled,
-  double neonRadius,
-  int neonColor,
-  double neonIntensity,
-  int neonLayers,
-  // gradient
-  int gradientEnabled,
-  int gradientType,
-  Pointer<Uint32> gradientColors,
-  int gradientColorCount,
-  double gradientAngle,
-);
+typedef _BarrageEnginePushNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> id,
+      Uint64 idLen,
+      Pointer<Uint8> text,
+      Uint64 textLen,
+      Uint32 trackType,
+      Uint32 color,
+      Float fontSize,
+      Uint64 timestampMs,
+      // stroke
+      Uint8 strokeEnabled,
+      Float strokeWidth,
+      Uint32 strokeColor,
+      Uint8 strokeOuter,
+      // shadow
+      Uint8 shadowEnabled,
+      Float shadowOffsetX,
+      Float shadowOffsetY,
+      Float shadowBlur,
+      Uint32 shadowColor,
+      Uint32 shadowLayers,
+      // neon
+      Uint8 neonEnabled,
+      Float neonRadius,
+      Uint32 neonColor,
+      Float neonIntensity,
+      Uint32 neonLayers,
+      // gradient
+      Uint8 gradientEnabled,
+      Uint32 gradientType,
+      Pointer<Uint32> gradientColors,
+      Uint32 gradientColorCount,
+      Float gradientAngle,
+    );
+typedef _BarrageEnginePushDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> id,
+      int idLen,
+      Pointer<Uint8> text,
+      int textLen,
+      int trackType,
+      int color,
+      double fontSize,
+      int timestampMs,
+      // stroke
+      int strokeEnabled,
+      double strokeWidth,
+      int strokeColor,
+      int strokeOuter,
+      // shadow
+      int shadowEnabled,
+      double shadowOffsetX,
+      double shadowOffsetY,
+      double shadowBlur,
+      int shadowColor,
+      int shadowLayers,
+      // neon
+      int neonEnabled,
+      double neonRadius,
+      int neonColor,
+      double neonIntensity,
+      int neonLayers,
+      // gradient
+      int gradientEnabled,
+      int gradientType,
+      Pointer<Uint32> gradientColors,
+      int gradientColorCount,
+      double gradientAngle,
+    );
 
 // ---------------------------------------------------------------------------
 // 渲染帧 FFI 签名
@@ -338,14 +319,10 @@ typedef _BarrageEnginePushDart = void Function(
 ///   uint64_t timestamp_ms,
 /// );
 /// ```
-typedef _BarrageEngineRenderFrameNative = Pointer<Uint8> Function(
-  Pointer<_EngineHandle> engine,
-  Uint64 timestampMs,
-);
-typedef _BarrageEngineRenderFrameDart = Pointer<Uint8> Function(
-  Pointer<_EngineHandle> engine,
-  int timestampMs,
-);
+typedef _BarrageEngineRenderFrameNative =
+    Pointer<Uint8> Function(Pointer<_EngineHandle> engine, Uint64 timestampMs);
+typedef _BarrageEngineRenderFrameDart =
+    Pointer<Uint8> Function(Pointer<_EngineHandle> engine, int timestampMs);
 
 // ---------------------------------------------------------------------------
 // Emoji 注册与回调 FFI 签名
@@ -369,14 +346,16 @@ typedef _BarrageEngineRenderFrameDart = Pointer<Uint8> Function(
 ///   )
 /// );
 /// ```
-typedef _SetEmojiBitmapCallbackNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback,
-);
-typedef _SetEmojiBitmapCallbackDart = void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback,
-);
+typedef _SetEmojiBitmapCallbackNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback,
+    );
+typedef _SetEmojiBitmapCallbackDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback,
+    );
 
 /// 从 Flutter 位图注册 emoji
 ///
@@ -392,22 +371,24 @@ typedef _SetEmojiBitmapCallbackDart = void Function(
 ///   uint32_t       height,
 /// );
 /// ```
-typedef _RegisterEmojiFromFlutterNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> emojiText,
-  Uint64 textLen,
-  Pointer<Uint8> pixels,
-  Uint32 width,
-  Uint32 height,
-);
-typedef _RegisterEmojiFromFlutterDart = void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> emojiText,
-  int textLen,
-  Pointer<Uint8> pixels,
-  int width,
-  int height,
-);
+typedef _RegisterEmojiFromFlutterNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> emojiText,
+      Uint64 textLen,
+      Pointer<Uint8> pixels,
+      Uint32 width,
+      Uint32 height,
+    );
+typedef _RegisterEmojiFromFlutterDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> emojiText,
+      int textLen,
+      Pointer<Uint8> pixels,
+      int width,
+      int height,
+    );
 
 /// 从本地文件路径注册 emoji
 ///
@@ -420,20 +401,22 @@ typedef _RegisterEmojiFromFlutterDart = void Function(
 ///   uint64_t       path_len,
 /// );
 /// ```
-typedef _RegisterEmojiFromLocalPathNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> emojiText,
-  Uint64 textLen,
-  Pointer<Uint8> path,
-  Uint64 pathLen,
-);
-typedef _RegisterEmojiFromLocalPathDart = void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> emojiText,
-  int textLen,
-  Pointer<Uint8> path,
-  int pathLen,
-);
+typedef _RegisterEmojiFromLocalPathNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> emojiText,
+      Uint64 textLen,
+      Pointer<Uint8> path,
+      Uint64 pathLen,
+    );
+typedef _RegisterEmojiFromLocalPathDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> emojiText,
+      int textLen,
+      Pointer<Uint8> path,
+      int pathLen,
+    );
 
 /// 从网络 URL 注册 emoji
 ///
@@ -446,20 +429,22 @@ typedef _RegisterEmojiFromLocalPathDart = void Function(
 ///   uint64_t       url_len,
 /// );
 /// ```
-typedef _RegisterEmojiFromUrlNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> emojiText,
-  Uint64 textLen,
-  Pointer<Uint8> url,
-  Uint64 urlLen,
-);
-typedef _RegisterEmojiFromUrlDart = void Function(
-  Pointer<_EngineHandle> engine,
-  Pointer<Uint8> emojiText,
-  int textLen,
-  Pointer<Uint8> url,
-  int urlLen,
-);
+typedef _RegisterEmojiFromUrlNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> emojiText,
+      Uint64 textLen,
+      Pointer<Uint8> url,
+      Uint64 urlLen,
+    );
+typedef _RegisterEmojiFromUrlDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      Pointer<Uint8> emojiText,
+      int textLen,
+      Pointer<Uint8> url,
+      int urlLen,
+    );
 
 // ---------------------------------------------------------------------------
 // 全局特效 FFI 签名
@@ -478,20 +463,22 @@ typedef _RegisterEmojiFromUrlDart = void Function(
 ///   uint8_t  is_outer,
 /// );
 /// ```
-typedef _SetGlobalStrokeNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Uint8 enabled,
-  Float width,
-  Uint32 color,
-  Uint8 isOuter,
-);
-typedef _SetGlobalStrokeDart = void Function(
-  Pointer<_EngineHandle> engine,
-  int enabled,
-  double width,
-  int color,
-  int isOuter,
-);
+typedef _SetGlobalStrokeNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Uint8 enabled,
+      Float width,
+      Uint32 color,
+      Uint8 isOuter,
+    );
+typedef _SetGlobalStrokeDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      int enabled,
+      double width,
+      int color,
+      int isOuter,
+    );
 
 /// 设置全局阴影效果
 ///
@@ -506,24 +493,26 @@ typedef _SetGlobalStrokeDart = void Function(
 ///   uint32_t layers,
 /// );
 /// ```
-typedef _SetGlobalShadowNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Uint8 enabled,
-  Float offsetX,
-  Float offsetY,
-  Float blur,
-  Uint32 color,
-  Uint32 layers,
-);
-typedef _SetGlobalShadowDart = void Function(
-  Pointer<_EngineHandle> engine,
-  int enabled,
-  double offsetX,
-  double offsetY,
-  double blur,
-  int color,
-  int layers,
-);
+typedef _SetGlobalShadowNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Uint8 enabled,
+      Float offsetX,
+      Float offsetY,
+      Float blur,
+      Uint32 color,
+      Uint32 layers,
+    );
+typedef _SetGlobalShadowDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      int enabled,
+      double offsetX,
+      double offsetY,
+      double blur,
+      int color,
+      int layers,
+    );
 
 /// 设置全局霓虹效果
 ///
@@ -537,22 +526,24 @@ typedef _SetGlobalShadowDart = void Function(
 ///   uint32_t layers,
 /// );
 /// ```
-typedef _SetGlobalNeonNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Uint8 enabled,
-  Float radius,
-  Uint32 color,
-  Float intensity,
-  Uint32 layers,
-);
-typedef _SetGlobalNeonDart = void Function(
-  Pointer<_EngineHandle> engine,
-  int enabled,
-  double radius,
-  int color,
-  double intensity,
-  int layers,
-);
+typedef _SetGlobalNeonNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Uint8 enabled,
+      Float radius,
+      Uint32 color,
+      Float intensity,
+      Uint32 layers,
+    );
+typedef _SetGlobalNeonDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      int enabled,
+      double radius,
+      int color,
+      double intensity,
+      int layers,
+    );
 
 /// 设置全局渐变效果
 ///
@@ -566,22 +557,24 @@ typedef _SetGlobalNeonDart = void Function(
 ///   float            angle,
 /// );
 /// ```
-typedef _SetGlobalGradientNative = Void Function(
-  Pointer<_EngineHandle> engine,
-  Uint8 enabled,
-  Uint32 type,
-  Pointer<Uint32> colors,
-  Uint32 colorCount,
-  Float angle,
-);
-typedef _SetGlobalGradientDart = void Function(
-  Pointer<_EngineHandle> engine,
-  int enabled,
-  int type,
-  Pointer<Uint32> colors,
-  int colorCount,
-  double angle,
-);
+typedef _SetGlobalGradientNative =
+    Void Function(
+      Pointer<_EngineHandle> engine,
+      Uint8 enabled,
+      Uint32 type,
+      Pointer<Uint32> colors,
+      Uint32 colorCount,
+      Float angle,
+    );
+typedef _SetGlobalGradientDart =
+    void Function(
+      Pointer<_EngineHandle> engine,
+      int enabled,
+      int type,
+      Pointer<Uint32> colors,
+      int colorCount,
+      double angle,
+    );
 
 // ---------------------------------------------------------------------------
 // BarrageFfiBind - FFI 绑定封装类
@@ -646,53 +639,77 @@ class BarrageFfiBind {
     return BarrageFfiBind._withLibrary(
       lib,
       create: lib
-          .lookupFunction<_BarrageEngineCreateNative,
-              _BarrageEngineCreateDart>('barrage_engine_create'),
-      destroy: lib
-          .lookupFunction<_BarrageEngineDestroyNative,
-              _BarrageEngineDestroyDart>('barrage_engine_destroy'),
+          .lookupFunction<_BarrageEngineCreateNative, _BarrageEngineCreateDart>(
+            'barrage_engine_create',
+          ),
+      destroy: lib.lookupFunction<
+        _BarrageEngineDestroyNative,
+        _BarrageEngineDestroyDart
+      >('barrage_engine_destroy'),
       resize: lib
-          .lookupFunction<_BarrageEngineResizeNative,
-              _BarrageEngineResizeDart>('barrage_engine_resize'),
-      setSpeed: lib
-          .lookupFunction<_BarrageEngineSetSpeedNative,
-              _BarrageEngineSetSpeedDart>('barrage_engine_set_speed'),
+          .lookupFunction<_BarrageEngineResizeNative, _BarrageEngineResizeDart>(
+            'barrage_engine_resize',
+          ),
+      setSpeed: lib.lookupFunction<
+        _BarrageEngineSetSpeedNative,
+        _BarrageEngineSetSpeedDart
+      >('barrage_engine_set_speed'),
       pause: lib
-          .lookupFunction<_BarrageEnginePauseNative,
-              _BarrageEnginePauseDart>('barrage_engine_pause'),
+          .lookupFunction<_BarrageEnginePauseNative, _BarrageEnginePauseDart>(
+            'barrage_engine_pause',
+          ),
       resume: lib
-          .lookupFunction<_BarrageEngineResumeNative,
-              _BarrageEngineResumeDart>('barrage_engine_resume'),
+          .lookupFunction<_BarrageEngineResumeNative, _BarrageEngineResumeDart>(
+            'barrage_engine_resume',
+          ),
       seek: lib
-          .lookupFunction<_BarrageEngineSeekNative,
-              _BarrageEngineSeekDart>('barrage_engine_seek'),
+          .lookupFunction<_BarrageEngineSeekNative, _BarrageEngineSeekDart>(
+            'barrage_engine_seek',
+          ),
       clear: lib
-          .lookupFunction<_BarrageEngineClearNative,
-              _BarrageEngineClearDart>('barrage_engine_clear'),
-      push: lib.lookupFunction<_BarrageEnginePushNative,
-          _BarrageEnginePushDart>('barrage_engine_push'),
-      renderFrame: lib.lookupFunction<_BarrageEngineRenderFrameNative,
-          _BarrageEngineRenderFrameDart>('barrage_engine_render_frame'),
+          .lookupFunction<_BarrageEngineClearNative, _BarrageEngineClearDart>(
+            'barrage_engine_clear',
+          ),
+      push: lib
+          .lookupFunction<_BarrageEnginePushNative, _BarrageEnginePushDart>(
+            'barrage_engine_push',
+          ),
+      renderFrame: lib.lookupFunction<
+        _BarrageEngineRenderFrameNative,
+        _BarrageEngineRenderFrameDart
+      >('barrage_engine_render_frame'),
       setEmojiBitmapCallback: lib.lookupFunction<
-          _SetEmojiBitmapCallbackNative,
-          _SetEmojiBitmapCallbackDart>('set_emoji_bitmap_callback'),
+        _SetEmojiBitmapCallbackNative,
+        _SetEmojiBitmapCallbackDart
+      >('set_emoji_bitmap_callback'),
       registerEmojiFromFlutter: lib.lookupFunction<
-          _RegisterEmojiFromFlutterNative,
-          _RegisterEmojiFromFlutterDart>('register_emoji_from_flutter'),
+        _RegisterEmojiFromFlutterNative,
+        _RegisterEmojiFromFlutterDart
+      >('register_emoji_from_flutter'),
       registerEmojiFromLocalPath: lib.lookupFunction<
-          _RegisterEmojiFromLocalPathNative,
-          _RegisterEmojiFromLocalPathDart>('register_emoji_from_local_path'),
+        _RegisterEmojiFromLocalPathNative,
+        _RegisterEmojiFromLocalPathDart
+      >('register_emoji_from_local_path'),
       registerEmojiFromUrl: lib.lookupFunction<
-          _RegisterEmojiFromUrlNative,
-          _RegisterEmojiFromUrlDart>('register_emoji_from_url'),
-      setGlobalStroke: lib.lookupFunction<_SetGlobalStrokeNative,
-          _SetGlobalStrokeDart>('set_global_stroke'),
-      setGlobalShadow: lib.lookupFunction<_SetGlobalShadowNative,
-          _SetGlobalShadowDart>('set_global_shadow'),
-      setGlobalNeon: lib.lookupFunction<_SetGlobalNeonNative,
-          _SetGlobalNeonDart>('set_global_neon'),
-      setGlobalGradient: lib.lookupFunction<_SetGlobalGradientNative,
-          _SetGlobalGradientDart>('set_global_gradient'),
+        _RegisterEmojiFromUrlNative,
+        _RegisterEmojiFromUrlDart
+      >('register_emoji_from_url'),
+      setGlobalStroke: lib
+          .lookupFunction<_SetGlobalStrokeNative, _SetGlobalStrokeDart>(
+            'set_global_stroke',
+          ),
+      setGlobalShadow: lib
+          .lookupFunction<_SetGlobalShadowNative, _SetGlobalShadowDart>(
+            'set_global_shadow',
+          ),
+      setGlobalNeon: lib
+          .lookupFunction<_SetGlobalNeonNative, _SetGlobalNeonDart>(
+            'set_global_neon',
+          ),
+      setGlobalGradient: lib
+          .lookupFunction<_SetGlobalGradientNative, _SetGlobalGradientDart>(
+            'set_global_gradient',
+          ),
     );
   }
 
@@ -716,24 +733,24 @@ class BarrageFfiBind {
     required _SetGlobalShadowDart setGlobalShadow,
     required _SetGlobalNeonDart setGlobalNeon,
     required _SetGlobalGradientDart setGlobalGradient,
-  })  : _create = create,
-        _destroy = destroy,
-        _resize = resize,
-        _setSpeed = setSpeed,
-        _pause = pause,
-        _resume = resume,
-        _seek = seek,
-        _clear = clear,
-        _push = push,
-        _renderFrame = renderFrame,
-        _setEmojiBitmapCallback = setEmojiBitmapCallback,
-        _registerEmojiFromFlutter = registerEmojiFromFlutter,
-        _registerEmojiFromLocalPath = registerEmojiFromLocalPath,
-        _registerEmojiFromUrl = registerEmojiFromUrl,
-        _setGlobalStroke = setGlobalStroke,
-        _setGlobalShadow = setGlobalShadow,
-        _setGlobalNeon = setGlobalNeon,
-        _setGlobalGradient = setGlobalGradient;
+  }) : _create = create,
+       _destroy = destroy,
+       _resize = resize,
+       _setSpeed = setSpeed,
+       _pause = pause,
+       _resume = resume,
+       _seek = seek,
+       _clear = clear,
+       _push = push,
+       _renderFrame = renderFrame,
+       _setEmojiBitmapCallback = setEmojiBitmapCallback,
+       _registerEmojiFromFlutter = registerEmojiFromFlutter,
+       _registerEmojiFromLocalPath = registerEmojiFromLocalPath,
+       _registerEmojiFromUrl = registerEmojiFromUrl,
+       _setGlobalStroke = setGlobalStroke,
+       _setGlobalShadow = setGlobalShadow,
+       _setGlobalNeon = setGlobalNeon,
+       _setGlobalGradient = setGlobalGradient;
 
   // -----------------------------------------------------------------------
   // 动态库加载
@@ -775,9 +792,7 @@ class BarrageFfiBind {
     double speed,
   ) {
     if (width <= 0 || height <= 0) {
-      throw ArgumentError(
-        'Invalid engine dimensions: ${width}x$height',
-      );
+      throw ArgumentError('Invalid engine dimensions: ${width}x$height');
     }
     return _create(width, height, fontRatio, speed);
   }
@@ -846,10 +861,7 @@ class BarrageFfiBind {
   // -----------------------------------------------------------------------
 
   /// 推送一条弹幕
-  void pushBarrage(
-    Pointer<_EngineHandle> engine,
-    BarrageMsg msg,
-  ) {
+  void pushBarrage(Pointer<_EngineHandle> engine, BarrageMsg msg) {
     _checkEngine(engine);
 
     // 使用 Arena 自动管理所有临时内存分配
@@ -919,10 +931,7 @@ class BarrageFfiBind {
   ///
   /// 返回指向内部 RGBA8888 缓冲区的指针。缓冲区在下次调用前有效。
   /// 返回 nullptr 表示渲染失败。
-  Pointer<Uint8> renderFrame(
-    Pointer<_EngineHandle> engine,
-    int timestampMs,
-  ) {
+  Pointer<Uint8> renderFrame(Pointer<_EngineHandle> engine, int timestampMs) {
     _checkEngine(engine);
     if (timestampMs < 0) {
       throw ArgumentError('Timestamp cannot be negative: $timestampMs');
@@ -989,13 +998,7 @@ class BarrageFfiBind {
       final pathPtr = _allocUtf8(arena, path);
       final pathLen = _utf8Length(path);
 
-      _registerEmojiFromLocalPath(
-        engine,
-        emojiPtr,
-        emojiLen,
-        pathPtr,
-        pathLen,
-      );
+      _registerEmojiFromLocalPath(engine, emojiPtr, emojiLen, pathPtr, pathLen);
     });
   }
 
@@ -1014,13 +1017,7 @@ class BarrageFfiBind {
       final urlPtr = _allocUtf8(arena, url);
       final urlLen = _utf8Length(url);
 
-      _registerEmojiFromUrl(
-        engine,
-        emojiPtr,
-        emojiLen,
-        urlPtr,
-        urlLen,
-      );
+      _registerEmojiFromUrl(engine, emojiPtr, emojiLen, urlPtr, urlLen);
     });
   }
 
@@ -1029,10 +1026,7 @@ class BarrageFfiBind {
   // -----------------------------------------------------------------------
 
   /// 设置全局描边
-  void setGlobalStroke(
-    Pointer<_EngineHandle> engine,
-    StrokeConfig config,
-  ) {
+  void setGlobalStroke(Pointer<_EngineHandle> engine, StrokeConfig config) {
     _checkEngine(engine);
     _setGlobalStroke(
       engine,
@@ -1044,10 +1038,7 @@ class BarrageFfiBind {
   }
 
   /// 设置全局阴影
-  void setGlobalShadow(
-    Pointer<_EngineHandle> engine,
-    ShadowConfig config,
-  ) {
+  void setGlobalShadow(Pointer<_EngineHandle> engine, ShadowConfig config) {
     _checkEngine(engine);
     _setGlobalShadow(
       engine,
@@ -1061,10 +1052,7 @@ class BarrageFfiBind {
   }
 
   /// 设置全局霓虹
-  void setGlobalNeon(
-    Pointer<_EngineHandle> engine,
-    NeonConfig config,
-  ) {
+  void setGlobalNeon(Pointer<_EngineHandle> engine, NeonConfig config) {
     _checkEngine(engine);
     _setGlobalNeon(
       engine,
@@ -1077,10 +1065,7 @@ class BarrageFfiBind {
   }
 
   /// 设置全局渐变
-  void setGlobalGradient(
-    Pointer<_EngineHandle> engine,
-    GradientConfig config,
-  ) {
+  void setGlobalGradient(Pointer<_EngineHandle> engine, GradientConfig config) {
     _checkEngine(engine);
 
     using((Arena arena) {

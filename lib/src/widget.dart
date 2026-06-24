@@ -269,22 +269,18 @@ class BarrageController extends ChangeNotifier {
     if (_disposed) return;
 
     // 使用 dart:ui 的异步图像解码
-    ui.decodeImageFromPixels(
-      pixels,
-      width,
-      height,
-      ui.PixelFormat.rgba8888,
-      (ui.Image image) {
-        if (_disposed) {
-          image.dispose();
-          return;
-        }
-        // 释放旧图像
-        _currentFrame?.dispose();
-        _currentFrame = image;
-        notifyListeners();
-      },
-    );
+    ui.decodeImageFromPixels(pixels, width, height, ui.PixelFormat.rgba8888, (
+      ui.Image image,
+    ) {
+      if (_disposed) {
+        image.dispose();
+        return;
+      }
+      // 释放旧图像
+      _currentFrame?.dispose();
+      _currentFrame = image;
+      notifyListeners();
+    });
   }
 
   // -----------------------------------------------------------------------
@@ -418,9 +414,8 @@ class _BarrageViewState extends State<BarrageView>
   void _onTick(Duration elapsed) {
     if (_controller.isDisposed) return;
 
-    final delta = _lastTick == Duration.zero
-        ? 0
-        : (elapsed - _lastTick).inMilliseconds;
+    final delta =
+        _lastTick == Duration.zero ? 0 : (elapsed - _lastTick).inMilliseconds;
     _lastTick = elapsed;
 
     // 更新帧
@@ -486,10 +481,7 @@ class _BarragePainter extends CustomPainter {
   /// 背景颜色
   final Color backgroundColor;
 
-  _BarragePainter({
-    required this.frame,
-    required this.backgroundColor,
-  });
+  _BarragePainter({required this.frame, required this.backgroundColor});
 
   @override
   void paint(Canvas canvas, Size size) {

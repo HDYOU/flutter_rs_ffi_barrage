@@ -23,11 +23,8 @@ import 'types.dart';
 /// Dart 侧 emoji 位图回调函数类型
 ///
 /// 接收 emoji 文本，返回 RGBA8888 像素数据，失败时返回 null。
-typedef EmojiBitmapCallback = Uint8List? Function(
-  String emojiText,
-  int width,
-  int height,
-);
+typedef EmojiBitmapCallback =
+    Uint8List? Function(String emojiText, int width, int height);
 
 /// 弹幕引擎
 ///
@@ -286,11 +283,7 @@ class BarrageEngine {
         return null;
       }
 
-      return EmojiBitmapResult(
-        width: size,
-        height: size,
-        pixels: pixels,
-      );
+      return EmojiBitmapResult(width: size, height: size, pixels: pixels);
     } catch (_) {
       return null;
     }
@@ -510,11 +503,12 @@ typedef _OpaqueEngine = Opaque;
 /// Emoji 位图回调的 Native 签名（与 ffi_bind.dart 中一致）
 ///
 /// 这里重复定义是为了避免在 engine.dart 中暴露内部 FFI 类型。
-typedef _EmojiBitmapCallbackNative = Bool Function(
-  Pointer<Uint8> emojiText,
-  Uint64 textLen,
-  Pointer<Uint32> outWidth,
-  Pointer<Uint32> outHeight,
-  Pointer<Pointer<Uint8>> outPixels,
-  Pointer<Uint64> outPixelLen,
-);
+typedef _EmojiBitmapCallbackNative =
+    Bool Function(
+      Pointer<Uint8> emojiText,
+      Uint64 textLen,
+      Pointer<Uint32> outWidth,
+      Pointer<Uint32> outHeight,
+      Pointer<Pointer<Uint8>> outPixels,
+      Pointer<Uint64> outPixelLen,
+    );

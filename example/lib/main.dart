@@ -95,10 +95,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
     super.initState();
 
     // 创建弹幕控制器
-    _controller = BarrageController(
-      speed: _currentSpeed,
-      autoPlay: true,
-    );
+    _controller = BarrageController(speed: _currentSpeed, autoPlay: true);
 
     // ================================================================
     // 场景 A：注入自定义 EmojiBitmapCallback 到 BarrageEngine
@@ -198,13 +195,15 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           // 绘制眼睛（黑色）
           final leftEyeDx = x - (centerX - eyeOffsetX);
           final leftEyeDy = y - (centerY + eyeOffsetY);
-          final leftEyeDist =
-              sqrt(leftEyeDx * leftEyeDx + leftEyeDy * leftEyeDy);
+          final leftEyeDist = sqrt(
+            leftEyeDx * leftEyeDx + leftEyeDy * leftEyeDy,
+          );
 
           final rightEyeDx = x - (centerX + eyeOffsetX);
           final rightEyeDy = y - (centerY + eyeOffsetY);
-          final rightEyeDist =
-              sqrt(rightEyeDx * rightEyeDx + rightEyeDy * rightEyeDy);
+          final rightEyeDist = sqrt(
+            rightEyeDx * rightEyeDx + rightEyeDy * rightEyeDy,
+          );
 
           if (leftEyeDist <= eyeRadius || rightEyeDist <= eyeRadius) {
             pixels[idx] = 0; // R
@@ -219,7 +218,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           final mouthDy = y - mouthCenterY;
           final mouthDist =
               (mouthDx * mouthDx) / (mouthWidth * mouthWidth) +
-                  (mouthDy * mouthDy) / (mouthHeight * mouthHeight);
+              (mouthDy * mouthDy) / (mouthHeight * mouthHeight);
 
           if (mouthDist <= 1.0 && mouthDy > 0) {
             pixels[idx] = 0; // R
@@ -285,12 +284,18 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           }
 
           // 判断是否在手掌区域
-          bool inPalm = x >= palmLeft && x <= palmRight &&
-              y >= palmTop && y <= palmBottom;
+          bool inPalm =
+              x >= palmLeft &&
+              x <= palmRight &&
+              y >= palmTop &&
+              y <= palmBottom;
 
           // 判断是否在大拇指区域
-          bool inThumb = x >= thumbLeft && x <= thumbRight &&
-              y >= thumbTop && y <= thumbBottom;
+          bool inThumb =
+              x >= thumbLeft &&
+              x <= thumbRight &&
+              y >= thumbTop &&
+              y <= thumbBottom;
 
           // 大拇指和手掌连接处的圆角
           if (inThumb || inPalm) {
@@ -332,7 +337,11 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
   void _preRegisterEmojis() {
     // 方式 1：从 Flutter 位图注册（内存生成的蓝色星星表情）
     const starSize = 64;
-    final starPixels = _generateStarBitmap(starSize, starSize, const Color(0xFFFFD700));
+    final starPixels = _generateStarBitmap(
+      starSize,
+      starSize,
+      const Color(0xFFFFD700),
+    );
     _controller.registerEmojiFromFlutterBitmap(
       '[星星]',
       starPixels,
@@ -484,7 +493,11 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
                 Text('像素数: ${result.pixels.length ~/ 4}'),
                 const SizedBox(height: 12),
                 FutureBuilder<ui.Image>(
-                  future: _decodeRgbaToImage(result.pixels, result.width, result.height),
+                  future: _decodeRgbaToImage(
+                    result.pixels,
+                    result.width,
+                    result.height,
+                  ),
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       return RawImage(
@@ -565,37 +578,41 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
   /// 构建当前特效配置
   TextEffectConfig _buildCurrentEffectConfig() {
     return TextEffectConfig(
-      stroke: _strokeEnabled
-          ? const StrokeConfig.enabled(
-              width: 2.5,
-              color: Color(0xFF000000),
-              isOuter: true,
-            )
-          : const StrokeConfig(),
-      shadow: _shadowEnabled
-          ? const ShadowConfig.enabled(
-              offsetX: 3.0,
-              offsetY: 3.0,
-              blur: 0.0,
-              color: Color(0x80000000),
-              layers: 3,
-            )
-          : const ShadowConfig(),
-      neon: _neonEnabled
-          ? const NeonConfig.enabled(
-              radius: 10.0,
-              color: Color(0xFFFF00FF),
-              intensity: 0.8,
-              layers: 4,
-            )
-          : const NeonConfig(),
-      gradient: _gradientEnabled
-          ? const GradientConfig.enabled(
-              type: GradientType.rainbow,
-              colors: [],
-              angle: 0.0,
-            )
-          : const GradientConfig(),
+      stroke:
+          _strokeEnabled
+              ? const StrokeConfig.enabled(
+                width: 2.5,
+                color: Color(0xFF000000),
+                isOuter: true,
+              )
+              : const StrokeConfig(),
+      shadow:
+          _shadowEnabled
+              ? const ShadowConfig.enabled(
+                offsetX: 3.0,
+                offsetY: 3.0,
+                blur: 0.0,
+                color: Color(0x80000000),
+                layers: 3,
+              )
+              : const ShadowConfig(),
+      neon:
+          _neonEnabled
+              ? const NeonConfig.enabled(
+                radius: 10.0,
+                color: Color(0xFFFF00FF),
+                intensity: 0.8,
+                layers: 4,
+              )
+              : const NeonConfig(),
+      gradient:
+          _gradientEnabled
+              ? const GradientConfig.enabled(
+                type: GradientType.rainbow,
+                colors: [],
+                angle: 0.0,
+              )
+              : const GradientConfig(),
     );
   }
 
@@ -733,7 +750,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
             offsetX: 2.0,
             offsetY: 2.0,
             blur: 0.0,
-            color:  Color(0x60000000),
+            color: Color(0x60000000),
             layers: 2,
           ),
           neon: NeonConfig.enabled(
@@ -775,10 +792,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         fontSize: 28,
         timestamp: _controller.currentTime,
         textEffects: const TextEffectConfig(
-          stroke: StrokeConfig.enabled(
-            width: 2.0,
-            color: Color(0xFF000000),
-          ),
+          stroke: StrokeConfig.enabled(width: 2.0, color: Color(0xFF000000)),
         ),
       ),
     );
@@ -811,10 +825,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _strokeEnabled = value;
       _controller.setGlobalStroke(
         value
-            ? const StrokeConfig.enabled(
-                width: 2.5,
-                color: Color(0xFF000000),
-              )
+            ? const StrokeConfig.enabled(width: 2.5, color: Color(0xFF000000))
             : const StrokeConfig(),
       );
     });
@@ -825,11 +836,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _shadowEnabled = value;
       _controller.setGlobalShadow(
         value
-            ? const ShadowConfig.enabled(
-                offsetX: 3.0,
-                offsetY: 3.0,
-                layers: 3,
-              )
+            ? const ShadowConfig.enabled(offsetX: 3.0, offsetY: 3.0, layers: 3)
             : const ShadowConfig(),
       );
     });
@@ -841,10 +848,10 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _controller.setGlobalNeon(
         value
             ? const NeonConfig.enabled(
-                radius: 10.0,
-                color: Color(0xFFFF00FF),
-                layers: 4,
-              )
+              radius: 10.0,
+              color: Color(0xFFFF00FF),
+              layers: 4,
+            )
             : const NeonConfig(),
       );
     });
@@ -884,10 +891,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           // -----------------------------------------------------------
           // 弹幕渲染区域（Stack 叠加展示透明效果）
           // -----------------------------------------------------------
-          Expanded(
-            flex: 3,
-            child: _buildBarrageArea(),
-          ),
+          Expanded(flex: 3, child: _buildBarrageArea()),
 
           // -----------------------------------------------------------
           // 特效选择区
@@ -943,11 +947,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           fit: StackFit.expand,
           children: [
             // 底层：装饰性背景元素
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _BackgroundPainter(),
-              ),
-            ),
+            Positioned.fill(child: CustomPaint(painter: _BackgroundPainter())),
             // 中间层：一些文字标识（证明 BarrageView 是透明的）
             const Positioned(
               left: 20,
@@ -1073,7 +1073,11 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
   }
 
   /// 构建演示按钮
-  Widget _buildDemoButton(String text, VoidCallback onPressed, {bool accent = false}) {
+  Widget _buildDemoButton(
+    String text,
+    VoidCallback onPressed, {
+    bool accent = false,
+  }) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -1103,21 +1107,13 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           const SizedBox(height: 4),
           Row(
             children: [
-              Expanded(
-                child: _buildTrackButton('滚动', TrackType.scrolling),
-              ),
+              Expanded(child: _buildTrackButton('滚动', TrackType.scrolling)),
               const SizedBox(width: 6),
-              Expanded(
-                child: _buildTrackButton('顶部', TrackType.top),
-              ),
+              Expanded(child: _buildTrackButton('顶部', TrackType.top)),
               const SizedBox(width: 6),
-              Expanded(
-                child: _buildTrackButton('底部', TrackType.bottom),
-              ),
+              Expanded(child: _buildTrackButton('底部', TrackType.bottom)),
               const SizedBox(width: 6),
-              Expanded(
-                child: _buildTrackButton('逆向', TrackType.reverse),
-              ),
+              Expanded(child: _buildTrackButton('逆向', TrackType.reverse)),
             ],
           ),
           const SizedBox(height: 4),
@@ -1125,13 +1121,25 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildDemoButton('发滚动弹幕', () => _sendTrackTypeDemo(TrackType.scrolling)),
+                _buildDemoButton(
+                  '发滚动弹幕',
+                  () => _sendTrackTypeDemo(TrackType.scrolling),
+                ),
                 const SizedBox(width: 6),
-                _buildDemoButton('发顶部弹幕', () => _sendTrackTypeDemo(TrackType.top)),
+                _buildDemoButton(
+                  '发顶部弹幕',
+                  () => _sendTrackTypeDemo(TrackType.top),
+                ),
                 const SizedBox(width: 6),
-                _buildDemoButton('发底部弹幕', () => _sendTrackTypeDemo(TrackType.bottom)),
+                _buildDemoButton(
+                  '发底部弹幕',
+                  () => _sendTrackTypeDemo(TrackType.bottom),
+                ),
                 const SizedBox(width: 6),
-                _buildDemoButton('发逆向弹幕', () => _sendTrackTypeDemo(TrackType.reverse)),
+                _buildDemoButton(
+                  '发逆向弹幕',
+                  () => _sendTrackTypeDemo(TrackType.reverse),
+                ),
               ],
             ),
           ),
@@ -1177,7 +1185,10 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               decoration: InputDecoration(
                 hintText: '输入弹幕内容，支持 [666] [好] [星星] 等表情',
                 hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -1195,7 +1206,10 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -1268,10 +1282,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 40, minHeight: 36),
         ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11),
-        ),
+        Text(label, style: const TextStyle(fontSize: 11)),
       ],
     );
   }
@@ -1292,10 +1303,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
             ),
             Text(
               '${_currentSpeed.toStringAsFixed(2)}x',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
             IconButton(
               icon: const Icon(Icons.add, size: 18),
@@ -1305,10 +1313,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
             ),
           ],
         ),
-        const Text(
-          '速度',
-          style: TextStyle(fontSize: 11),
-        ),
+        const Text('速度', style: TextStyle(fontSize: 11)),
       ],
     );
   }
@@ -1326,9 +1331,10 @@ class _BackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // 绘制几个装饰性圆形
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
-      ..style = PaintingStyle.fill;
+    final paint =
+        Paint()
+          ..color = Colors.white.withOpacity(0.05)
+          ..style = PaintingStyle.fill;
 
     // 大圆形
     canvas.drawCircle(
@@ -1344,9 +1350,10 @@ class _BackgroundPainter extends CustomPainter {
     );
 
     // 网格线
-    final gridPaint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
-      ..strokeWidth = 1;
+    final gridPaint =
+        Paint()
+          ..color = Colors.white.withOpacity(0.03)
+          ..strokeWidth = 1;
 
     const gridSize = 40.0;
     for (double x = 0; x < size.width; x += gridSize) {
