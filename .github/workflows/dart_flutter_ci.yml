@@ -1,0 +1,129 @@
+# Description: Dart & Flutter 代码质量与插件校验工作流
+# 对 Flutter 插件代码执行格式化检查、静态分析、单元测试及发布预检
+
+name: Dart & Flutter CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'example/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options.yaml'
+      - '.github/workflows/dart_flutter_ci.yml'
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'example/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options.yaml'
+      - '.github/workflows/dart_flutter_ci.yml'
+
+env:
+  FLUTTER_VERSION: '3.41.0'
+  PUB_CACHE: ${{ github.workspace }}/.pub-cache
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Dart 代码质量检查与单元测试
+  # ---------------------------------------------------------------------------
+  dart-lint-test:
+    name: Dart Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-ubuntu
+
+      - name: 缓存 Pub 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.PUB_CACHE }}
+            .dart_tool/
+          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.yaml', 'pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: 安装依赖 (flutter pub get)
+        run: flutter pub get
+
+      - name: 格式化校验 (dart format)
+        run: dart format --set-exit-if-changed .
+        continue-on-error: false
+
+      - name: 静态分析 (flutter analyze)
+        run: flutter analyze
+        continue-on-error: false
+
+      - name: 单元测试 (flutter test)
+        run: |
+          if [ -d "test" ] && [ "$(find test -name '*_test.dart' | wc -l)" -gt 0 ]; then
+            flutter test --coverage
+          else
+            echo "未找到单元测试文件，跳过测试步骤"
+          fi
+        continue-on-error: false
+
+      - name: 插件发布预检 (flutter pub publish --dry-run)
+        run: flutter pub publish --dry-run
+        continue-on-error: false
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Example 工程编译验证
+  # ---------------------------------------------------------------------------
+  example-check:
+    name: Example Build Check
+    runs-on: ubuntu-latest
+    needs: dart-lint-test
+    defaults:
+      run:
+        working-directory: example
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-ubuntu
+
+      - name: 缓存 Example Pub 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.PUB_CACHE }}
+            example/.dart_tool/
+          key: ${{ runner.os }}-pub-example-${{ hashFiles('example/pubspec.yaml', 'example/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-example-
+            ${{ runner.os }}-pub-
+
+      - name: 安装 Example 依赖 (flutter pub get)
+        run: flutter pub get
+
+      - name: Example 静态分析 (flutter analyze)
+        run: flutter analyze
+        continue-on-error: false
+
+      - name: Web 构建验证 (flutter build web --release)
+        run: flutter build web --release --verbose
+        continue-on-error: false

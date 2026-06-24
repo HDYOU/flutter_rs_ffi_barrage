@@ -1,0 +1,435 @@
+# Description: Full Build - All Platforms 全平台构建与产物归档工作流
+# 在标签发布或手动触发时，构建 Android/iOS/Windows/macOS/Linux 五平台产物并统一归档
+
+name: Full Build - All Platforms
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'release/*'
+  workflow_dispatch:
+    inputs:
+      description: '手动触发全平台构建'
+
+env:
+  FLUTTER_VERSION: '3.41.0'
+  PUB_CACHE: ${{ github.workspace }}/.pub-cache
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+
+jobs:
+  # =========================================================================
+  # Job 1: Android 构建
+  # =========================================================================
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: example
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-android
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+
+      - name: 缓存 Cargo 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            native/rs_core/target/
+          key: ${{ runner.os }}-cargo-android-${{ hashFiles('native/rs_core/Cargo.lock', 'native/rs_core/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-android-
+            ${{ runner.os }}-cargo-
+
+      - name: 安装 Android NDK
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+
+      - name: 安装依赖 (flutter pub get)
+        run: flutter pub get
+
+      - name: 构建 APK (flutter build apk --release)
+        run: flutter build apk --release --verbose
+        continue-on-error: false
+
+      - name: 收集 Android 产物
+        run: |
+          mkdir -p ../build_artifacts/android
+          # 复制 APK
+          cp build/app/outputs/flutter-apk/app-release.apk ../build_artifacts/android/
+          # 复制 .so 库文件
+          find build/app/intermediates/stripped_native_libs -name "*.so" -type f 2>/dev/null || true
+          find build/app/outputs -name "*.so" -type f 2>/dev/null || true
+          # 从 apk 中提取 so 用于归档
+          if [ -d build/app/outputs/flutter-apk/app-release.apk ]; then
+            echo "APK 构建成功"
+            ls -lh build/app/outputs/flutter-apk/app-release.apk
+          fi
+
+      - name: 上传 Android 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: |
+            example/build/app/outputs/flutter-apk/app-release.apk
+            example/build_artifacts/android/
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Job 2: iOS 构建
+  # =========================================================================
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: example
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-ios
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,x86_64-apple-ios,aarch64-apple-ios-sim
+
+      - name: 缓存 Cargo 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            native/rs_core/target/
+          key: ${{ runner.os }}-cargo-ios-${{ hashFiles('native/rs_core/Cargo.lock', 'native/rs_core/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-ios-
+            ${{ runner.os }}-cargo-
+
+      - name: 安装依赖 (flutter pub get)
+        run: flutter pub get
+
+      - name: 构建 iOS (flutter build ios --release --no-codesign)
+        run: flutter build ios --release --no-codesign --verbose
+        continue-on-error: false
+
+      - name: 收集 iOS 产物
+        run: |
+          mkdir -p ../build_artifacts/ios
+          # 查找 .framework 文件
+          find build/ios -name "*.framework" -type d 2>/dev/null || true
+          # 复制 framework
+          if [ -d build/ios/Release-iphoneos/Runner.app/Frameworks ]; then
+            cp -R build/ios/Release-iphoneos/Runner.app/Frameworks/*.framework ../build_artifacts/ios/ 2>/dev/null || true
+          fi
+
+      - name: 上传 iOS 产物 (.framework)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: |
+            example/build_artifacts/ios/
+            example/build/ios/
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Job 3: Windows 构建
+  # =========================================================================
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: example
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-windows
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: 缓存 Cargo 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            native/rs_core/target/
+          key: ${{ runner.os }}-cargo-windows-${{ hashFiles('native/rs_core/Cargo.lock', 'native/rs_core/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-windows-
+            ${{ runner.os }}-cargo-
+
+      - name: 安装依赖 (flutter pub get)
+        run: flutter pub get
+
+      - name: 构建 Windows (flutter build windows --release)
+        run: flutter build windows --release --verbose
+        continue-on-error: false
+
+      - name: 收集 Windows 产物
+        run: |
+          New-Item -ItemType Directory -Force -Path "../build_artifacts/windows"
+          # 复制 dll 和 exe
+          if (Test-Path "build/windows/x64/runner/Release") {
+            Copy-Item -Path "build/windows/x64/runner/Release/*.dll" -Destination "../build_artifacts/windows/" -Recurse -Force
+            Copy-Item -Path "build/windows/x64/runner/Release/*.exe" -Destination "../build_artifacts/windows/" -Force
+          }
+
+      - name: 上传 Windows 产物 (.dll & .exe)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            example/build_artifacts/windows/
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Job 4: macOS 构建
+  # =========================================================================
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: example
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-macos
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: 缓存 Cargo 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            native/rs_core/target/
+          key: ${{ runner.os }}-cargo-macos-${{ hashFiles('native/rs_core/Cargo.lock', 'native/rs_core/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-macos-
+            ${{ runner.os }}-cargo-
+
+      - name: 安装依赖 (flutter pub get)
+        run: flutter pub get
+
+      - name: 构建 macOS (flutter build macos --release)
+        run: flutter build macos --release --verbose
+        continue-on-error: false
+
+      - name: 收集 macOS 产物
+        run: |
+          mkdir -p ../build_artifacts/macos
+          # 查找并复制 .dylib 文件
+          find build/macos -name "*.dylib" -type f 2>/dev/null || true
+          # 从 app bundle 中复制 dylib
+          if [ -d build/macos/Build/Products/Release ]; then
+            find build/macos/Build/Products/Release -name "*.dylib" -exec cp {} ../build_artifacts/macos/ 2>/dev/null || true
+          fi
+
+      - name: 上传 macOS 产物 (.dylib)
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: |
+            example/build_artifacts/macos/
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Job 5: Linux 构建
+  # =========================================================================
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: example
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-linux
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - name: 缓存 Cargo 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            native/rs_core/target/
+          key: ${{ runner.os }}-cargo-linux-${{ hashFiles('native/rs_core/Cargo.lock', 'native/rs_core/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-linux-
+            ${{ runner.os }}-cargo-
+
+      - name: 安装 Linux 编译依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxext-dev \
+            libxfixes-dev \
+            libxrender-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libasound2-dev \
+            libpulse-dev \
+            libcurl4-openssl-dev \
+            libstdc++-12-dev \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config
+      - name: 安装依赖 (flutter pub get)
+        run: flutter pub get
+
+      - name: 构建 Linux (flutter build linux --release)
+        run: flutter build linux --release --verbose
+        continue-on-error: false
+
+      - name: 收集 Linux 产物
+        run: |
+          mkdir -p ../build_artifacts/linux
+          # 查找并复制 .so 文件
+          find build/linux -name "*.so" -type f 2>/dev/null || true
+          # 从构建目录复制
+          if [ -d build/linux/x64/release/bundle/lib ]; then
+            cp build/linux/x64/release/bundle/lib/*.so ../build_artifacts/linux/ 2>/dev/null || true
+          fi
+
+      - name: 上传 Linux 产物 (.so)
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            example/build_artifacts/linux/
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Job 6: 汇总归档所有平台产物
+  # =========================================================================
+  upload-artifacts:
+    name: Upload All Artifacts
+    needs: [build-android, build-ios, build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 下载所有平台产物
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
+
+      - name: 整理产物结构
+        run: |
+          mkdir -p final-artifacts
+          mkdir -p final-artifacts/android
+          mkdir -p final-artifacts/ios
+          mkdir -p final-artifacts/windows
+          mkdir -p final-artifacts/macos
+          mkdir -p final-artifacts/linux
+
+          # Android
+          if [ -d "all-artifacts/android-build" ]; then
+            cp -r all-artifacts/android-build/* final-artifacts/android/ 2>/dev/null || true
+          fi
+          # iOS
+          if [ -d "all-artifacts/ios-build" ]; then
+            cp -r all-artifacts/ios-build/* final-artifacts/ios/ 2>/dev/null || true
+          fi
+          # Windows
+          if [ -d "all-artifacts/windows-build" ]; then
+            cp -r all-artifacts/windows-build/* final-artifacts/windows/ 2>/dev/null || true
+          fi
+          # macOS
+          if [ -d "all-artifacts/macos-build" ]; then
+            cp -r all-artifacts/macos-build/* final-artifacts/macos/ 2>/dev/null || true
+          fi
+          # Linux
+          if [ -d "all-artifacts/linux-build" ]; then
+            cp -r all-artifacts/linux-build/* final-artifacts/linux/ 2>/dev/null || true
+          fi
+
+          echo "=== 最终产物结构 ==="
+          find final-artifacts -type f | head -50
+          echo "==================="
+
+      - name: 统一归档所有平台产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-platforms-build
+          path: final-artifacts/
+          if-no-files-found: warn

@@ -1,0 +1,37 @@
+name: flutter_rs_ffi_barrage
+description: A high-performance Flutter barrage plugin powered by Rust FFI, with pure Rust extern "C" exports and direct Dart:ffi binding - no C glue layer, no cbindgen, no .h headers.
+version: 1.0.0
+repository: https://github.com/HDYOU/flutter_rs_ffi_barrage
+issue_tracker: https://github.com/HDYOU/flutter_rs_ffi_barrage/issues
+
+environment:
+  sdk: '>=3.7.0 <4.0.0'
+  flutter: '^3.41.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ffi: ^2.1.2
+  native_assets_cli: ^0.15.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        ffiPlugin: true
+      ios:
+        ffiPlugin: true
+      windows:
+        ffiPlugin: true
+      macos:
+        ffiPlugin: true
+      linux:
+        ffiPlugin: true
+
+  assets:
+    - native_assets.yaml
