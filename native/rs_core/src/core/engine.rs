@@ -13,7 +13,10 @@ use crate::track::track_manager::{BarrageItem, TrackManager, TrackType};
 use crossbeam::queue::ArrayQueue;
 use std::sync::Arc;
 
+use flutter_rust_bridge::frb;
+
 /// 引擎播放状态
+#[frb]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayState {
     /// 播放中

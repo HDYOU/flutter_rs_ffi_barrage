@@ -13,8 +13,10 @@
 
 use crate::text_effect::effects::TextEffects;
 use crate::utils::math::clamp_f32;
+use flutter_rust_bridge::frb;
 
 /// 弹幕轨道类型
+#[frb]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum TrackType {

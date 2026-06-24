@@ -11,6 +11,9 @@ use crate::utils::color::{
 };
 
 /// 渐变类型
+use flutter_rust_bridge::frb;
+
+#[frb]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum GradientType {
