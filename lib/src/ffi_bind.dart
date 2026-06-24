@@ -180,6 +180,27 @@ typedef _BarrageEngineClearDart = void Function(Pointer<_EngineHandle> engine);
 ///   uint32_t       color,          // RGBA
 ///   uint32_t       font_size,      // 像素
 ///   uint64_t       timestamp_ms,
+///   // 描边效果
+///   bool           stroke_enabled,
+///   float          stroke_width,
+///   uint32_t       stroke_color,
+///   // 阴影效果
+///   bool           shadow_enabled,
+///   float          shadow_offset_x,
+///   float          shadow_offset_y,
+///   float          shadow_blur,
+///   uint32_t       shadow_color,
+///   // 霓虹效果
+///   bool           neon_enabled,
+///   float          neon_radius,
+///   uint32_t       neon_color,
+///   float          neon_intensity,
+///   // 渐变效果
+///   bool           gradient_enabled,
+///   uint32_t       gradient_type,  // 0=linear, 1=radial, 2=rainbow
+///   const uint32_t* gradient_colors,
+///   uint32_t       gradient_colors_len,
+///   float          gradient_angle,
 /// );
 /// ```
 typedef _BarrageEnginePushNative =
@@ -191,6 +212,23 @@ typedef _BarrageEnginePushNative =
       Uint32 color,
       Uint32 fontSize,
       Uint64 timestampMs,
+      Bool strokeEnabled,
+      Float strokeWidth,
+      Uint32 strokeColor,
+      Bool shadowEnabled,
+      Float shadowOffsetX,
+      Float shadowOffsetY,
+      Float shadowBlur,
+      Uint32 shadowColor,
+      Bool neonEnabled,
+      Float neonRadius,
+      Uint32 neonColor,
+      Float neonIntensity,
+      Bool gradientEnabled,
+      Uint32 gradientType,
+      Pointer<Uint32> gradientColors,
+      Uint32 gradientColorsLen,
+      Float gradientAngle,
     );
 typedef _BarrageEnginePushDart =
     bool Function(
@@ -201,6 +239,23 @@ typedef _BarrageEnginePushDart =
       int color,
       int fontSize,
       int timestampMs,
+      bool strokeEnabled,
+      double strokeWidth,
+      int strokeColor,
+      bool shadowEnabled,
+      double shadowOffsetX,
+      double shadowOffsetY,
+      double shadowBlur,
+      int shadowColor,
+      bool neonEnabled,
+      double neonRadius,
+      int neonColor,
+      double neonIntensity,
+      bool gradientEnabled,
+      int gradientType,
+      Pointer<Uint32> gradientColors,
+      int gradientColorsLen,
+      double gradientAngle,
     );
 
 // ---------------------------------------------------------------------------
@@ -800,6 +855,22 @@ class BarrageFfiBind {
       final textPtr = _allocUtf8(arena, msg.text);
       final textLen = _utf8Length(msg.text);
 
+      final effects = msg.textEffects;
+
+      // 渐变颜色数组
+      Pointer<Uint32> gradientColorsPtr = nullptr;
+      int gradientColorsLen = 0;
+
+      if (effects.gradient.enabled &&
+          effects.gradient.type != GradientType.rainbow) {
+        final colors = effects.gradient.colors;
+        gradientColorsLen = colors.length;
+        gradientColorsPtr = arena.allocate<Uint32>(gradientColorsLen);
+        for (var i = 0; i < colors.length; i++) {
+          gradientColorsPtr[i] = _colorToRgba(colors[i]);
+        }
+      }
+
       return _push(
         engine,
         textPtr,
@@ -808,6 +879,27 @@ class BarrageFfiBind {
         _colorToRgba(msg.color),
         msg.fontSize.toInt(),
         msg.timestamp,
+        // 描边
+        effects.stroke.enabled,
+        effects.stroke.width,
+        _colorToRgba(effects.stroke.color),
+        // 阴影
+        effects.shadow.enabled,
+        effects.shadow.offsetX,
+        effects.shadow.offsetY,
+        effects.shadow.blur,
+        _colorToRgba(effects.shadow.color),
+        // 霓虹
+        effects.neon.enabled,
+        effects.neon.radius,
+        _colorToRgba(effects.neon.color),
+        effects.neon.intensity,
+        // 渐变
+        effects.gradient.enabled,
+        effects.gradient.type.index,
+        gradientColorsPtr,
+        gradientColorsLen,
+        effects.gradient.angle,
       );
     });
   }

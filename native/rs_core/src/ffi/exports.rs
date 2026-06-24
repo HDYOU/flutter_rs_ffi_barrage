@@ -21,6 +21,7 @@
 use crate::core::engine::BarrageEngine;
 use crate::ffi::callbacks::{self, EmojiBitmapRawCallback};
 use crate::render::renderer::BarrageRenderer;
+use crate::text_effect::effects::TextEffects;
 use crate::track::track_manager::TrackType;
 
 /// 最大字符串长度限制（1MB）
@@ -240,6 +241,23 @@ pub unsafe extern "C" fn barrage_engine_clear(engine_ptr: *mut u8) {
 /// - `color`: 文字颜色（RGBA8888）
 /// - `font_size`: 字体大小（像素）
 /// - `timestamp_ms`: 时间戳（毫秒）
+/// - `stroke_enabled`: 是否启用描边
+/// - `stroke_width`: 描边宽度（像素）
+/// - `stroke_color`: 描边颜色（RGBA8888）
+/// - `shadow_enabled`: 是否启用阴影
+/// - `shadow_offset_x`: 阴影 X 偏移（像素）
+/// - `shadow_offset_y`: 阴影 Y 偏移（像素）
+/// - `shadow_blur`: 阴影模糊半径（像素）
+/// - `shadow_color`: 阴影颜色（RGBA8888）
+/// - `neon_enabled`: 是否启用霓虹发光
+/// - `neon_radius`: 霓虹发光半径（像素）
+/// - `neon_color`: 霓虹发光颜色（RGBA8888）
+/// - `neon_intensity`: 霓虹发光强度（0.0 ~ 3.0）
+/// - `gradient_enabled`: 是否启用渐变
+/// - `gradient_type`: 渐变类型（0=线性, 1=径向, 2=彩虹）
+/// - `gradient_colors_ptr`: 渐变颜色数组指针（RGBA8888）
+/// - `gradient_colors_len`: 渐变颜色数量
+/// - `gradient_angle`: 渐变角度（度）
 ///
 /// # 返回值
 /// - `true`: 推送成功
@@ -253,6 +271,23 @@ pub unsafe extern "C" fn barrage_engine_push(
     color: u32,
     font_size: u32,
     timestamp_ms: u64,
+    stroke_enabled: bool,
+    stroke_width: f32,
+    stroke_color: u32,
+    shadow_enabled: bool,
+    shadow_offset_x: f32,
+    shadow_offset_y: f32,
+    shadow_blur: f32,
+    shadow_color: u32,
+    neon_enabled: bool,
+    neon_radius: f32,
+    neon_color: u32,
+    neon_intensity: f32,
+    gradient_enabled: bool,
+    gradient_type: u32,
+    gradient_colors_ptr: *const u32,
+    gradient_colors_len: u32,
+    gradient_angle: f32,
 ) -> bool {
     let wrapper = match get_engine_wrapper(engine_ptr) {
         Some(w) => w,
@@ -277,9 +312,93 @@ pub unsafe extern "C" fn barrage_engine_push(
     // 轨道类型转换
     let tt = TrackType::from_u32(track_type);
 
+    // 构建文字特效
+    let mut effects = TextEffects::default();
+
+    // 描边效果
+    if stroke_enabled {
+        if stroke_width.is_nan() || stroke_width.is_infinite() || !(0.0..=50.0).contains(&stroke_width) {
+            return false;
+        }
+        effects.stroke.enabled = true;
+        effects.stroke.width = stroke_width;
+        effects.stroke.color = crate::utils::color::Color::from_u32(stroke_color);
+    }
+
+    // 阴影效果
+    if shadow_enabled {
+        if shadow_offset_x.is_nan() || shadow_offset_x.is_infinite() || shadow_offset_x.abs() > 100.0 {
+            return false;
+        }
+        if shadow_offset_y.is_nan() || shadow_offset_y.is_infinite() || shadow_offset_y.abs() > 100.0 {
+            return false;
+        }
+        if shadow_blur.is_nan() || shadow_blur.is_infinite() || !(0.0..=100.0).contains(&shadow_blur) {
+            return false;
+        }
+        effects.shadow.enabled = true;
+        effects.shadow.offset_x = shadow_offset_x;
+        effects.shadow.offset_y = shadow_offset_y;
+        effects.shadow.blur = shadow_blur;
+        effects.shadow.color = crate::utils::color::Color::from_u32(shadow_color);
+    }
+
+    // 霓虹效果
+    if neon_enabled {
+        if neon_radius.is_nan() || neon_radius.is_infinite() || !(0.0..=200.0).contains(&neon_radius) {
+            return false;
+        }
+        if neon_intensity.is_nan() || neon_intensity.is_infinite() || !(0.0..=3.0).contains(&neon_intensity) {
+            return false;
+        }
+        effects.neon.enabled = true;
+        effects.neon.radius = neon_radius;
+        effects.neon.color = crate::utils::color::Color::from_u32(neon_color);
+        effects.neon.intensity = neon_intensity;
+    }
+
+    // 渐变效果
+    if gradient_enabled {
+        if gradient_type > 2 {
+            return false;
+        }
+        if gradient_angle.is_nan() || gradient_angle.is_infinite() {
+            return false;
+        }
+
+        use crate::text_effect::effects::GradientType;
+        effects.gradient.enabled = true;
+        effects.gradient.gradient_type = GradientType::from_u32(gradient_type);
+        effects.gradient.angle = gradient_angle;
+
+        if gradient_type != 2 {
+            // 非彩虹渐变需要颜色数组
+            if gradient_colors_ptr.is_null() {
+                return false;
+            }
+            if gradient_colors_len == 0 || gradient_colors_len > MAX_GRADIENT_COLORS {
+                return false;
+            }
+
+            let colors_slice = std::slice::from_raw_parts(gradient_colors_ptr, gradient_colors_len as usize);
+            let colors: Vec<u32> = colors_slice.to_vec();
+
+            // 生成均匀分布的 stops
+            let stops: Vec<f32> = if gradient_colors_len > 1 {
+                (0..gradient_colors_len)
+                    .map(|i| i as f32 / (gradient_colors_len - 1) as f32)
+                    .collect()
+            } else {
+                vec![0.0]
+            };
+
+            effects.gradient.set_colors_from_u32(&colors, &stops);
+        }
+    }
+
     wrapper
         .engine
-        .push(&text, color, font_size, timestamp_ms, tt)
+        .push(&text, color, font_size, timestamp_ms, tt, effects)
 }
 
 // ============================================================================
@@ -767,6 +886,10 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
+                false, 0.0, 0,          // stroke
+                false, 0.0, 0.0, 0.0, 0, // shadow
+                false, 0.0, 0, 0.0,     // neon
+                false, 0, std::ptr::null(), 0, 0.0, // gradient
             );
             assert!(!result);
 
@@ -791,12 +914,21 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
+                false, 0.0, 0,          // stroke
+                false, 0.0, 0.0, 0.0, 0, // shadow
+                false, 0.0, 0, 0.0,     // neon
+                false, 0, std::ptr::null(), 0, 0.0, // gradient
             )
         };
         assert!(result);
 
         // 空文本
-        let result = unsafe { barrage_engine_push(engine, b"".as_ptr(), 0, 0, 0xFFFFFFFF, 24, 0) };
+        let result = unsafe { barrage_engine_push(engine, b"".as_ptr(), 0, 0, 0xFFFFFFFF, 24, 0,
+            false, 0.0, 0,
+            false, 0.0, 0.0, 0.0, 0,
+            false, 0.0, 0, 0.0,
+            false, 0, std::ptr::null(), 0, 0.0,
+        ) };
         assert!(!result);
 
         unsafe { barrage_engine_destroy(engine) };
@@ -818,6 +950,10 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
+                false, 0.0, 0,
+                false, 0.0, 0.0, 0.0, 0,
+                false, 0.0, 0, 0.0,
+                false, 0, std::ptr::null(), 0, 0.0,
             );
         }
 
@@ -907,6 +1043,10 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
+                false, 0.0, 0,
+                false, 0.0, 0.0, 0.0, 0,
+                false, 0.0, 0, 0.0,
+                false, 0, std::ptr::null(), 0, 0.0,
             );
         }
 

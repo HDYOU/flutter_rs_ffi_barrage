@@ -11,6 +11,7 @@
 //! - 考虑弹幕速度和长度，确保不会追上前方弹幕
 //! - 顶部/底部固定轨道按时间轮转
 
+use crate::text_effect::effects::TextEffects;
 use crate::utils::math::clamp_f32;
 
 /// 弹幕轨道类型
@@ -85,6 +86,8 @@ pub struct BarrageItem {
     pub alive: bool,
     /// 不透明度（0.0 ~ 1.0）
     pub opacity: f32,
+    /// 文字特效（每条弹幕独立）
+    pub effects: TextEffects,
 }
 
 impl BarrageItem {
@@ -95,6 +98,7 @@ impl BarrageItem {
         font_size: u32,
         timestamp_ms: u64,
         track_type: TrackType,
+        effects: TextEffects,
     ) -> Self {
         Self {
             id,
@@ -113,6 +117,7 @@ impl BarrageItem {
             elapsed_ms: 0,
             alive: true,
             opacity: 1.0,
+            effects,
         }
     }
 
@@ -489,11 +494,20 @@ impl TrackManager {
         font_size: u32,
         timestamp_ms: u64,
         track_type: TrackType,
+        effects: TextEffects,
     ) -> bool {
         let id = self.next_id;
         self.next_id += 1;
 
-        let mut item = BarrageItem::new(id, text, color, font_size, timestamp_ms, track_type);
+        let mut item = BarrageItem::new(
+            id,
+            text,
+            color,
+            font_size,
+            timestamp_ms,
+            track_type,
+            effects,
+        );
         item.width = item.estimate_width();
         item.height = font_size as f32 * 1.2;
         item.speed = self.base_speed;
@@ -753,7 +767,7 @@ mod tests {
     #[test]
     fn test_push_barrage() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        let result = manager.push("测试弹幕".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
+        let result = manager.push("测试弹幕".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
         assert!(result);
         assert_eq!(manager.alive_count(), 1);
     }
@@ -761,7 +775,7 @@ mod tests {
     #[test]
     fn test_update_barrage() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
+        manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
 
         let items = manager.get_all_alive();
         let initial_x = items[0].x;
@@ -775,8 +789,8 @@ mod tests {
     #[test]
     fn test_clear() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        manager.push("测试1".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
-        manager.push("测试2".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Top);
+        manager.push("测试1".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        manager.push("测试2".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Top, TextEffects::default());
 
         assert_eq!(manager.alive_count(), 2);
 
@@ -787,7 +801,7 @@ mod tests {
     #[test]
     fn test_resize() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
+        manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
 
         let count_before = manager.scroll_track_count();
         manager.resize(1920.0, 1080.0);

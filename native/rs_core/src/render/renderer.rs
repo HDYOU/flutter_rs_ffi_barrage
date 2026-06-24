@@ -273,7 +273,7 @@ impl BarrageRenderer {
 
         // 从后往前渲染（先出现的在底层）
         for item in items.iter().rev() {
-            self.render_barrage(item, &engine.emoji_manager, &engine.text_effects);
+            self.render_barrage(item, &engine.emoji_manager, &item.effects);
         }
 
         // 复制到输出缓冲区
@@ -708,7 +708,7 @@ mod tests {
         let mut renderer = BarrageRenderer::new(200, 200);
         let mut engine = BarrageEngine::new(200, 200);
 
-        engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
+        engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
         engine.update(0);
 
         let mut buffer = vec![0u32; 200 * 200];

@@ -120,6 +120,7 @@ mod tests {
                 20,
                 i * 100,
                 TrackType::Scroll,
+                TextEffects::default(),
             );
         }
 
