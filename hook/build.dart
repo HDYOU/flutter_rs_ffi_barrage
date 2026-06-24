@@ -63,6 +63,11 @@ void main(List<String> args) async {
     if (targetOS == OS.android) {
       final ndkEnv = await _checkAndroidNdkAndGetEnv(rustTarget);
       buildEnv.addAll(ndkEnv);
+    } else if (targetOS == OS.macOS || targetOS == OS.iOS) {
+      // Set Apple SDK environment variables so cc-rs (used by ring, etc.)
+      // can find TargetConditionals.h and other system headers.
+      final sdkEnv = await _appleSdkEnv(targetOS, targetArch);
+      buildEnv.addAll(sdkEnv);
     }
 
     // -------------------------------------------------------------------
@@ -478,6 +483,77 @@ String _ndkToolchainPrefix(String rustTarget) {
     default:
       return rustTarget;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Apple SDK environment (macOS / iOS)
+// ---------------------------------------------------------------------------
+
+/// Set up Apple SDK environment variables for cc-rs compatibility.
+///
+/// Crates like `ring` use cc-rs to compile C code, which needs to find
+/// Apple SDK headers (e.g. TargetConditionals.h). When running on macOS
+/// CI, cc-rs may use the system `cc` instead of Xcode's clang, and
+/// may not know where the SDK is.
+Future<Map<String, String>> _appleSdkEnv(
+  OS targetOS,
+  Architecture targetArch,
+) async {
+  final env = <String, String>{};
+
+  // Only apply on macOS hosts (where xcrun is available)
+  if (Platform.operatingSystem != 'macos') return env;
+
+  final sdkName = targetOS == OS.iOS ? 'iphoneos' : 'macosx';
+
+  // Get SDK path via xcrun
+  try {
+    final result = await Process.run('xcrun', [
+      '--sdk',
+      sdkName,
+      '--show-sdk-path',
+    ]);
+    if (result.exitCode == 0) {
+      final sdkPath = (result.stdout as String).trim();
+      if (sdkPath.isNotEmpty) {
+        env['SDKROOT'] = sdkPath;
+        env['CMAKE_OSX_SYSROOT'] = sdkPath;
+        _info('🏔️  Apple SDK: $sdkName -> $sdkPath');
+      }
+    }
+  } catch (_) {
+    // xcrun not available, skip
+  }
+
+  // Also try to get the platform path and developer dir
+  try {
+    final result = await Process.run('xcrun', ['--show-sdk-platform-path']);
+    if (result.exitCode == 0) {
+      final platformPath = (result.stdout as String).trim();
+      if (platformPath.isNotEmpty) {
+        env['PLATFORM_DIR'] = platformPath;
+      }
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  // Use Xcode's clang if available
+  try {
+    final result = await Process.run('xcrun', ['--find', 'clang']);
+    if (result.exitCode == 0) {
+      final clangPath = (result.stdout as String).trim();
+      if (clangPath.isNotEmpty) {
+        env['CC'] = clangPath;
+        env['CXX'] = '${clangPath}++';
+        _info('🔧 Apple CC: $clangPath');
+      }
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  return env;
 }
 
 Future<String> _ndkToolchainDir(String ndkHome) async {
