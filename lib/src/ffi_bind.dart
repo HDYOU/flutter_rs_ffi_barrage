@@ -8,7 +8,7 @@
 /// - 所有传入 Rust 的字符串使用 UTF-8 编码，以 Pointer<Uint8> + length 传递
 /// - 所有由 Dart 分配并传入 Rust 的内存，由 Dart 负责在调用后释放
 /// - 所有由 Rust 分配并返回给 Dart 的内存，由 Dart 侧提供对应的释放函数
-/// - 指针操作前后均做空值检查与长度校验
+/// - 指针操作前后都做空值检查与长度校验
 ///
 /// 符号命名约定（与 Rust 侧完全一致）：
 /// - 引擎相关：`barrage_engine_*`
@@ -32,7 +32,7 @@ import 'types.dart';
 
 /// 弹幕引擎不透明句柄
 ///
-/// Rust 侧 `BarrageEngine` 的不透明指针，Dart 侧只持有句柄，
+/// Rust 侧 `EngineWrapper` 的不透明指针，Dart 侧只持有句柄，
 /// 不直接访问内部字段。
 typedef _EngineHandle = Opaque;
 
@@ -74,24 +74,12 @@ typedef _EmojiBitmapCallbackNative =
 /// void* barrage_engine_create(
 ///   uint32_t width,
 ///   uint32_t height,
-///   float    font_ratio,
-///   float    speed,
 /// );
 /// ```
 typedef _BarrageEngineCreateNative =
-    Pointer<_EngineHandle> Function(
-      Uint32 width,
-      Uint32 height,
-      Float fontRatio,
-      Float speed,
-    );
+    Pointer<_EngineHandle> Function(Uint32 width, Uint32 height);
 typedef _BarrageEngineCreateDart =
-    Pointer<_EngineHandle> Function(
-      int width,
-      int height,
-      double fontRatio,
-      double speed,
-    );
+    Pointer<_EngineHandle> Function(int width, int height);
 
 /// 销毁弹幕引擎
 ///
@@ -184,113 +172,35 @@ typedef _BarrageEngineClearDart = void Function(Pointer<_EngineHandle> engine);
 /// 颜色使用 32 位 RGBA 格式（0xRRGGBBAA）。
 ///
 /// ```c
-/// void barrage_engine_push(
+/// bool barrage_engine_push(
 ///   void*          engine,
-///   const uint8_t* id,
-///   uint64_t       id_len,
 ///   const uint8_t* text,
 ///   uint64_t       text_len,
 ///   uint32_t       track_type,     // 0=scrolling, 1=top, 2=bottom, 3=reverse
 ///   uint32_t       color,          // RGBA
-///   float          font_size,
+///   uint32_t       font_size,      // 像素
 ///   uint64_t       timestamp_ms,
-///   // 文字特效 - 描边
-///   uint8_t  stroke_enabled,
-///   float    stroke_width,
-///   uint32_t stroke_color,         // RGBA
-///   uint8_t  stroke_outer,
-///   // 文字特效 - 阴影
-///   uint8_t  shadow_enabled,
-///   float    shadow_offset_x,
-///   float    shadow_offset_y,
-///   float    shadow_blur,
-///   uint32_t shadow_color,         // RGBA
-///   uint32_t shadow_layers,
-///   // 文字特效 - 霓虹
-///   uint8_t  neon_enabled,
-///   float    neon_radius,
-///   uint32_t neon_color,           // RGBA
-///   float    neon_intensity,
-///   uint32_t neon_layers,
-///   // 文字特效 - 渐变
-///   uint8_t        gradient_enabled,
-///   uint32_t       gradient_type,  // 0=linear, 1=radial, 2=rainbow
-///   const uint32_t* gradient_colors, // RGBA 数组
-///   uint32_t       gradient_color_count,
-///   float          gradient_angle,
 /// );
 /// ```
 typedef _BarrageEnginePushNative =
-    Void Function(
+    Bool Function(
       Pointer<_EngineHandle> engine,
-      Pointer<Uint8> id,
-      Uint64 idLen,
       Pointer<Uint8> text,
       Uint64 textLen,
       Uint32 trackType,
       Uint32 color,
-      Float fontSize,
+      Uint32 fontSize,
       Uint64 timestampMs,
-      // stroke
-      Uint8 strokeEnabled,
-      Float strokeWidth,
-      Uint32 strokeColor,
-      Uint8 strokeOuter,
-      // shadow
-      Uint8 shadowEnabled,
-      Float shadowOffsetX,
-      Float shadowOffsetY,
-      Float shadowBlur,
-      Uint32 shadowColor,
-      Uint32 shadowLayers,
-      // neon
-      Uint8 neonEnabled,
-      Float neonRadius,
-      Uint32 neonColor,
-      Float neonIntensity,
-      Uint32 neonLayers,
-      // gradient
-      Uint8 gradientEnabled,
-      Uint32 gradientType,
-      Pointer<Uint32> gradientColors,
-      Uint32 gradientColorCount,
-      Float gradientAngle,
     );
 typedef _BarrageEnginePushDart =
-    void Function(
+    bool Function(
       Pointer<_EngineHandle> engine,
-      Pointer<Uint8> id,
-      int idLen,
       Pointer<Uint8> text,
       int textLen,
       int trackType,
       int color,
-      double fontSize,
+      int fontSize,
       int timestampMs,
-      // stroke
-      int strokeEnabled,
-      double strokeWidth,
-      int strokeColor,
-      int strokeOuter,
-      // shadow
-      int shadowEnabled,
-      double shadowOffsetX,
-      double shadowOffsetY,
-      double shadowBlur,
-      int shadowColor,
-      int shadowLayers,
-      // neon
-      int neonEnabled,
-      double neonRadius,
-      int neonColor,
-      double neonIntensity,
-      int neonLayers,
-      // gradient
-      int gradientEnabled,
-      int gradientType,
-      Pointer<Uint32> gradientColors,
-      int gradientColorCount,
-      double gradientAngle,
     );
 
 // ---------------------------------------------------------------------------
@@ -299,33 +209,46 @@ typedef _BarrageEnginePushDart =
 
 /// 渲染指定时间戳的帧
 ///
-/// 返回指向内部 RGBA8888 帧缓冲区的指针，缓冲区大小为
-/// width * height * 4 字节。返回的指针在下次调用 render_frame
-/// 或 destroy 之前有效。返回 nullptr 表示渲染失败。
+/// 将渲染结果写入输出缓冲区（RGBA8888，u32 数组）。
+/// buffer_len 为元素个数（不是字节数）。
+/// 返回渲染的弹幕数量，失败返回 0。
 ///
 /// ```c
-/// const uint8_t* barrage_engine_render_frame(
+/// uint32_t barrage_engine_render_frame(
 ///   void*    engine,
-///   uint64_t timestamp_ms,
+///   uint64_t time_ms,
+///   uint32_t* out_buffer,
+///   uint64_t buffer_len,
 /// );
 /// ```
 typedef _BarrageEngineRenderFrameNative =
-    Pointer<Uint8> Function(Pointer<_EngineHandle> engine, Uint64 timestampMs);
+    Uint32 Function(
+      Pointer<_EngineHandle> engine,
+      Uint64 timeMs,
+      Pointer<Uint32> outBuffer,
+      Uint64 bufferLen,
+    );
 typedef _BarrageEngineRenderFrameDart =
-    Pointer<Uint8> Function(Pointer<_EngineHandle> engine, int timestampMs);
+    int Function(
+      Pointer<_EngineHandle> engine,
+      int timeMs,
+      Pointer<Uint32> outBuffer,
+      int bufferLen,
+    );
 
 // ---------------------------------------------------------------------------
 // Emoji 注册与回调 FFI 签名
 // ---------------------------------------------------------------------------
 
-/// 设置 emoji 位图请求回调
+/// 设置 emoji 位图请求回调（全局）
 ///
-/// 将 Dart 侧的回调函数注册到 Rust 引擎。当 Rust 侧需要某个 emoji
+/// 将 Dart 侧的回调函数注册为全局回调。当 Rust 侧需要某个 emoji
 /// 的位图时，会调用此回调向 Flutter 请求。
+///
+/// 注意：这是全局函数，不针对特定引擎实例。
 ///
 /// ```c
 /// void set_emoji_bitmap_callback(
-///   void*     engine,
 ///   bool (*callback)(
 ///     const uint8_t* emoji_text,
 ///     uint64_t       text_len,
@@ -337,53 +260,50 @@ typedef _BarrageEngineRenderFrameDart =
 /// );
 /// ```
 typedef _SetEmojiBitmapCallbackNative =
-    Void Function(
-      Pointer<_EngineHandle> engine,
-      Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback,
-    );
+    Void Function(Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback);
 typedef _SetEmojiBitmapCallbackDart =
-    void Function(
-      Pointer<_EngineHandle> engine,
-      Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback,
-    );
+    void Function(Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback);
 
 /// 从 Flutter 位图注册 emoji
 ///
 /// 直接将 Flutter 侧预渲染的 emoji 位图注册到 Rust 引擎。
 ///
 /// ```c
-/// void register_emoji_from_flutter(
+/// bool register_emoji_from_flutter(
 ///   void*          engine,
 ///   const uint8_t* emoji_text,
 ///   uint64_t       text_len,
-///   const uint8_t* pixels,
 ///   uint32_t       width,
 ///   uint32_t       height,
+///   const uint8_t* pixels,
+///   uint64_t       pixels_len,
 /// );
 /// ```
 typedef _RegisterEmojiFromFlutterNative =
-    Void Function(
+    Bool Function(
       Pointer<_EngineHandle> engine,
       Pointer<Uint8> emojiText,
       Uint64 textLen,
-      Pointer<Uint8> pixels,
       Uint32 width,
       Uint32 height,
+      Pointer<Uint8> pixels,
+      Uint64 pixelsLen,
     );
 typedef _RegisterEmojiFromFlutterDart =
-    void Function(
+    bool Function(
       Pointer<_EngineHandle> engine,
       Pointer<Uint8> emojiText,
       int textLen,
-      Pointer<Uint8> pixels,
       int width,
       int height,
+      Pointer<Uint8> pixels,
+      int pixelsLen,
     );
 
 /// 从本地文件路径注册 emoji
 ///
 /// ```c
-/// void register_emoji_from_local_path(
+/// bool register_emoji_from_local_path(
 ///   void*          engine,
 ///   const uint8_t* emoji_text,
 ///   uint64_t       text_len,
@@ -392,7 +312,7 @@ typedef _RegisterEmojiFromFlutterDart =
 /// );
 /// ```
 typedef _RegisterEmojiFromLocalPathNative =
-    Void Function(
+    Bool Function(
       Pointer<_EngineHandle> engine,
       Pointer<Uint8> emojiText,
       Uint64 textLen,
@@ -400,7 +320,7 @@ typedef _RegisterEmojiFromLocalPathNative =
       Uint64 pathLen,
     );
 typedef _RegisterEmojiFromLocalPathDart =
-    void Function(
+    bool Function(
       Pointer<_EngineHandle> engine,
       Pointer<Uint8> emojiText,
       int textLen,
@@ -411,7 +331,7 @@ typedef _RegisterEmojiFromLocalPathDart =
 /// 从网络 URL 注册 emoji
 ///
 /// ```c
-/// void register_emoji_from_url(
+/// bool register_emoji_from_url(
 ///   void*          engine,
 ///   const uint8_t* emoji_text,
 ///   uint64_t       text_len,
@@ -420,7 +340,7 @@ typedef _RegisterEmojiFromLocalPathDart =
 /// );
 /// ```
 typedef _RegisterEmojiFromUrlNative =
-    Void Function(
+    Bool Function(
       Pointer<_EngineHandle> engine,
       Pointer<Uint8> emojiText,
       Uint64 textLen,
@@ -428,7 +348,7 @@ typedef _RegisterEmojiFromUrlNative =
       Uint64 urlLen,
     );
 typedef _RegisterEmojiFromUrlDart =
-    void Function(
+    bool Function(
       Pointer<_EngineHandle> engine,
       Pointer<Uint8> emojiText,
       int textLen,
@@ -442,32 +362,29 @@ typedef _RegisterEmojiFromUrlDart =
 
 /// 设置全局描边效果
 ///
-/// 对所有后续推送的弹幕生效，除非弹幕自身指定了描边。
+/// 对所有后续推送的弹幕生效。
 ///
 /// ```c
 /// void set_global_stroke(
 ///   void*    engine,
-///   uint8_t  enabled,
+///   bool     enabled,
 ///   float    width,
 ///   uint32_t color,   // RGBA
-///   uint8_t  is_outer,
 /// );
 /// ```
 typedef _SetGlobalStrokeNative =
     Void Function(
       Pointer<_EngineHandle> engine,
-      Uint8 enabled,
+      Bool enabled,
       Float width,
       Uint32 color,
-      Uint8 isOuter,
     );
 typedef _SetGlobalStrokeDart =
     void Function(
       Pointer<_EngineHandle> engine,
-      int enabled,
+      bool enabled,
       double width,
       int color,
-      int isOuter,
     );
 
 /// 设置全局阴影效果
@@ -475,33 +392,30 @@ typedef _SetGlobalStrokeDart =
 /// ```c
 /// void set_global_shadow(
 ///   void*    engine,
-///   uint8_t  enabled,
+///   bool     enabled,
 ///   float    offset_x,
 ///   float    offset_y,
 ///   float    blur,
 ///   uint32_t color,     // RGBA
-///   uint32_t layers,
 /// );
 /// ```
 typedef _SetGlobalShadowNative =
     Void Function(
       Pointer<_EngineHandle> engine,
-      Uint8 enabled,
+      Bool enabled,
       Float offsetX,
       Float offsetY,
       Float blur,
       Uint32 color,
-      Uint32 layers,
     );
 typedef _SetGlobalShadowDart =
     void Function(
       Pointer<_EngineHandle> engine,
-      int enabled,
+      bool enabled,
       double offsetX,
       double offsetY,
       double blur,
       int color,
-      int layers,
     );
 
 /// 设置全局霓虹效果
@@ -509,30 +423,27 @@ typedef _SetGlobalShadowDart =
 /// ```c
 /// void set_global_neon(
 ///   void*    engine,
-///   uint8_t  enabled,
+///   bool     enabled,
 ///   float    radius,
 ///   uint32_t color,       // RGBA
 ///   float    intensity,
-///   uint32_t layers,
 /// );
 /// ```
 typedef _SetGlobalNeonNative =
     Void Function(
       Pointer<_EngineHandle> engine,
-      Uint8 enabled,
+      Bool enabled,
       Float radius,
       Uint32 color,
       Float intensity,
-      Uint32 layers,
     );
 typedef _SetGlobalNeonDart =
     void Function(
       Pointer<_EngineHandle> engine,
-      int enabled,
+      bool enabled,
       double radius,
       int color,
       double intensity,
-      int layers,
     );
 
 /// 设置全局渐变效果
@@ -540,31 +451,53 @@ typedef _SetGlobalNeonDart =
 /// ```c
 /// void set_global_gradient(
 ///   void*            engine,
-///   uint8_t          enabled,
-///   uint32_t         type,   // 0=linear, 1=radial, 2=rainbow
-///   const uint32_t*  colors, // RGBA 数组
-///   uint32_t         color_count,
+///   bool             enabled,
+///   uint32_t         gradient_type,  // 0=linear, 1=radial, 2=rainbow
+///   const uint32_t*  colors,         // RGBA 数组
+///   uint32_t         colors_len,
 ///   float            angle,
 /// );
 /// ```
 typedef _SetGlobalGradientNative =
     Void Function(
       Pointer<_EngineHandle> engine,
-      Uint8 enabled,
-      Uint32 type,
+      Bool enabled,
+      Uint32 gradientType,
       Pointer<Uint32> colors,
-      Uint32 colorCount,
+      Uint32 colorsLen,
       Float angle,
     );
 typedef _SetGlobalGradientDart =
     void Function(
       Pointer<_EngineHandle> engine,
-      int enabled,
-      int type,
+      bool enabled,
+      int gradientType,
       Pointer<Uint32> colors,
-      int colorCount,
+      int colorsLen,
       double angle,
     );
+
+// ---------------------------------------------------------------------------
+// 工具函数 FFI 签名
+// ---------------------------------------------------------------------------
+
+/// 获取引擎版本号
+///
+/// ```c
+/// const char* barrage_engine_version();
+/// ```
+typedef _BarrageEngineVersionNative = Pointer<Uint8> Function();
+typedef _BarrageEngineVersionDart = Pointer<Uint8> Function();
+
+/// 获取当前存活弹幕数
+///
+/// ```c
+/// uint32_t barrage_engine_alive_count(void* engine);
+/// ```
+typedef _BarrageEngineAliveCountNative =
+    Uint32 Function(Pointer<_EngineHandle> engine);
+typedef _BarrageEngineAliveCountDart =
+    int Function(Pointer<_EngineHandle> engine);
 
 // ---------------------------------------------------------------------------
 // BarrageFfiBind - FFI 绑定封装类
@@ -618,6 +551,10 @@ class BarrageFfiBind {
   final _SetGlobalShadowDart _setGlobalShadow;
   final _SetGlobalNeonDart _setGlobalNeon;
   final _SetGlobalGradientDart _setGlobalGradient;
+
+  // 工具
+  final _BarrageEngineVersionDart _version;
+  final _BarrageEngineAliveCountDart _aliveCount;
 
   /// 私有构造函数 - 加载动态库并查找所有符号
   factory BarrageFfiBind._() {
@@ -696,6 +633,14 @@ class BarrageFfiBind {
           .lookupFunction<_SetGlobalGradientNative, _SetGlobalGradientDart>(
             'set_global_gradient',
           ),
+      version: lib.lookupFunction<
+        _BarrageEngineVersionNative,
+        _BarrageEngineVersionDart
+      >('barrage_engine_version'),
+      aliveCount: lib.lookupFunction<
+        _BarrageEngineAliveCountNative,
+        _BarrageEngineAliveCountDart
+      >('barrage_engine_alive_count'),
     );
   }
 
@@ -718,6 +663,8 @@ class BarrageFfiBind {
     required _SetGlobalShadowDart setGlobalShadow,
     required _SetGlobalNeonDart setGlobalNeon,
     required _SetGlobalGradientDart setGlobalGradient,
+    required _BarrageEngineVersionDart version,
+    required _BarrageEngineAliveCountDart aliveCount,
   }) : _create = create,
        _destroy = destroy,
        _resize = resize,
@@ -735,7 +682,9 @@ class BarrageFfiBind {
        _setGlobalStroke = setGlobalStroke,
        _setGlobalShadow = setGlobalShadow,
        _setGlobalNeon = setGlobalNeon,
-       _setGlobalGradient = setGlobalGradient;
+       _setGlobalGradient = setGlobalGradient,
+       _version = version,
+       _aliveCount = aliveCount;
 
   // -----------------------------------------------------------------------
   // 动态库加载
@@ -770,16 +719,11 @@ class BarrageFfiBind {
   /// 创建弹幕引擎
   ///
   /// 返回不透明引擎句柄。失败时返回 nullptr。
-  Pointer<_EngineHandle> createEngine(
-    int width,
-    int height,
-    double fontRatio,
-    double speed,
-  ) {
+  Pointer<_EngineHandle> createEngine(int width, int height) {
     if (width <= 0 || height <= 0) {
       throw ArgumentError('Invalid engine dimensions: ${width}x$height');
     }
-    return _create(width, height, fontRatio, speed);
+    return _create(width, height);
   }
 
   /// 销毁弹幕引擎
@@ -846,64 +790,24 @@ class BarrageFfiBind {
   // -----------------------------------------------------------------------
 
   /// 推送一条弹幕
-  void pushBarrage(Pointer<_EngineHandle> engine, BarrageMsg msg) {
+  ///
+  /// 返回 true 表示推送成功，false 表示失败（参数无效或被过滤）。
+  bool pushBarrage(Pointer<_EngineHandle> engine, BarrageMsg msg) {
     _checkEngine(engine);
 
     // 使用 Arena 自动管理所有临时内存分配
-    using((Arena arena) {
-      final idPtr = _allocUtf8(arena, msg.id);
-      final idLen = _utf8Length(msg.id);
-
+    return using((Arena arena) {
       final textPtr = _allocUtf8(arena, msg.text);
       final textLen = _utf8Length(msg.text);
 
-      // 渐变颜色数组
-      Pointer<Uint32> gradientColorsPtr = nullptr;
-      int gradientColorCount = 0;
-      if (msg.textEffects.gradient.enabled &&
-          msg.textEffects.gradient.type != GradientType.rainbow) {
-        final colors = msg.textEffects.gradient.colors;
-        gradientColorCount = colors.length;
-        gradientColorsPtr = arena.allocate<Uint32>(gradientColorCount);
-        for (var i = 0; i < colors.length; i++) {
-          gradientColorsPtr[i] = _colorToRgba(colors[i]);
-        }
-      }
-
-      _push(
+      return _push(
         engine,
-        idPtr,
-        idLen,
         textPtr,
         textLen,
         msg.trackType.index,
         _colorToRgba(msg.color),
-        msg.fontSize,
+        msg.fontSize.toInt(),
         msg.timestamp,
-        // stroke
-        msg.textEffects.stroke.enabled ? 1 : 0,
-        msg.textEffects.stroke.width,
-        _colorToRgba(msg.textEffects.stroke.color),
-        msg.textEffects.stroke.isOuter ? 1 : 0,
-        // shadow
-        msg.textEffects.shadow.enabled ? 1 : 0,
-        msg.textEffects.shadow.offsetX,
-        msg.textEffects.shadow.offsetY,
-        msg.textEffects.shadow.blur,
-        _colorToRgba(msg.textEffects.shadow.color),
-        msg.textEffects.shadow.layers,
-        // neon
-        msg.textEffects.neon.enabled ? 1 : 0,
-        msg.textEffects.neon.radius,
-        _colorToRgba(msg.textEffects.neon.color),
-        msg.textEffects.neon.intensity,
-        msg.textEffects.neon.layers,
-        // gradient
-        msg.textEffects.gradient.enabled ? 1 : 0,
-        msg.textEffects.gradient.type.index,
-        gradientColorsPtr,
-        gradientColorCount,
-        msg.textEffects.gradient.angle,
       );
     });
   }
@@ -912,97 +816,119 @@ class BarrageFfiBind {
   // 渲染
   // -----------------------------------------------------------------------
 
-  /// 渲染一帧
+  /// 渲染一帧弹幕
   ///
-  /// 返回指向内部 RGBA8888 缓冲区的指针。缓冲区在下次调用前有效。
-  /// 返回 nullptr 表示渲染失败。
-  Pointer<Uint8> renderFrame(Pointer<_EngineHandle> engine, int timestampMs) {
+  /// 将结果写入 [outBuffer]（RGBA8888 格式，u32 数组）。
+  /// [bufferLen] 为元素个数（不是字节数）。
+  /// 返回渲染的弹幕数量，失败返回 0。
+  int renderFrame(
+    Pointer<_EngineHandle> engine,
+    int timestampMs,
+    Pointer<Uint32> outBuffer,
+    int bufferLen,
+  ) {
     _checkEngine(engine);
     if (timestampMs < 0) {
       throw ArgumentError('Timestamp cannot be negative: $timestampMs');
     }
-    return _renderFrame(engine, timestampMs);
+    if (outBuffer == nullptr) {
+      throw ArgumentError('Output buffer pointer is null');
+    }
+    if (bufferLen <= 0) {
+      throw ArgumentError('Buffer length must be positive: $bufferLen');
+    }
+    return _renderFrame(engine, timestampMs, outBuffer, bufferLen);
   }
 
   // -----------------------------------------------------------------------
   // Emoji 回调与注册
   // -----------------------------------------------------------------------
 
-  /// 设置 emoji 位图请求回调
+  /// 设置全局 emoji 位图请求回调
+  ///
+  /// 注意：这是全局函数，不针对特定引擎实例。
   void setEmojiBitmapCallback(
-    Pointer<_EngineHandle> engine,
     Pointer<NativeFunction<_EmojiBitmapCallbackNative>> callback,
   ) {
-    _checkEngine(engine);
-    _setEmojiBitmapCallback(engine, callback);
+    _setEmojiBitmapCallback(callback);
   }
 
   /// 从 Flutter 位图注册 emoji
-  void registerEmojiFromFlutter(
+  ///
+  /// 返回 true 表示注册成功。
+  bool registerEmojiFromFlutter(
     Pointer<_EngineHandle> engine,
     String emojiText,
-    Pointer<Uint8> pixels,
     int width,
     int height,
+    Pointer<Uint8> pixels,
+    int pixelsLen,
   ) {
     _checkEngine(engine);
-    if (pixels == nullptr) {
-      throw ArgumentError('Pixels pointer is null');
-    }
     if (width <= 0 || height <= 0) {
       throw ArgumentError('Invalid emoji dimensions: ${width}x$height');
     }
+    if (pixels == nullptr) {
+      throw ArgumentError('Pixels pointer is null');
+    }
 
-    using((Arena arena) {
+    return using((Arena arena) {
       final emojiPtr = _allocUtf8(arena, emojiText);
       final emojiLen = _utf8Length(emojiText);
 
-      _registerEmojiFromFlutter(
+      return _registerEmojiFromFlutter(
         engine,
         emojiPtr,
         emojiLen,
-        pixels,
         width,
         height,
+        pixels,
+        pixelsLen,
       );
     });
   }
 
   /// 从本地文件路径注册 emoji
-  void registerEmojiFromLocalPath(
+  bool registerEmojiFromLocalPath(
     Pointer<_EngineHandle> engine,
     String emojiText,
     String path,
   ) {
     _checkEngine(engine);
 
-    using((Arena arena) {
+    return using((Arena arena) {
       final emojiPtr = _allocUtf8(arena, emojiText);
       final emojiLen = _utf8Length(emojiText);
 
       final pathPtr = _allocUtf8(arena, path);
       final pathLen = _utf8Length(path);
 
-      _registerEmojiFromLocalPath(engine, emojiPtr, emojiLen, pathPtr, pathLen);
+      return _registerEmojiFromLocalPath(
+        engine,
+        emojiPtr,
+        emojiLen,
+        pathPtr,
+        pathLen,
+      );
     });
   }
 
   /// 从网络 URL 注册 emoji
-  void registerEmojiFromUrl(
+  bool registerEmojiFromUrl(
     Pointer<_EngineHandle> engine,
     String emojiText,
     String url,
   ) {
     _checkEngine(engine);
 
-    using((Arena arena) {
+    return using((Arena arena) {
       final emojiPtr = _allocUtf8(arena, emojiText);
       final emojiLen = _utf8Length(emojiText);
 
       final urlPtr = _allocUtf8(arena, url);
       final urlLen = _utf8Length(url);
 
-      _registerEmojiFromUrl(engine, emojiPtr, emojiLen, urlPtr, urlLen);
+      return _registerEmojiFromUrl(engine, emojiPtr, emojiLen, urlPtr, urlLen);
     });
   }
 
@@ -1015,10 +941,9 @@ class BarrageFfiBind {
     _checkEngine(engine);
     _setGlobalStroke(
       engine,
-      config.enabled ? 1 : 0,
+      config.enabled,
       config.width,
       _colorToRgba(config.color),
-      config.isOuter ? 1 : 0,
     );
   }
 
@@ -1027,12 +952,11 @@ class BarrageFfiBind {
     _checkEngine(engine);
     _setGlobalShadow(
       engine,
-      config.enabled ? 1 : 0,
+      config.enabled,
       config.offsetX,
       config.offsetY,
       config.blur,
       _colorToRgba(config.color),
-      config.layers,
     );
   }
 
@@ -1041,11 +965,10 @@ class BarrageFfiBind {
     _checkEngine(engine);
     _setGlobalNeon(
       engine,
-      config.enabled ? 1 : 0,
+      config.enabled,
       config.radius,
       _colorToRgba(config.color),
       config.intensity,
-      config.layers,
     );
   }
 
@@ -1068,7 +991,7 @@ class BarrageFfiBind {
 
       _setGlobalGradient(
         engine,
-        config.enabled ? 1 : 0,
+        config.enabled,
         config.type.index,
         colorsPtr,
         colorCount,
@@ -1078,8 +1001,27 @@ class BarrageFfiBind {
   }
 
   // -----------------------------------------------------------------------
-  // 工具方法
+  // 工具函数
   // -----------------------------------------------------------------------
+
+  /// 获取引擎版本号
+  String get version {
+    final ptr = _version();
+    if (ptr == nullptr) return 'unknown';
+    // 读取以 null 结尾的字符串
+    int len = 0;
+    while ((ptr + len).value != 0) {
+      len++;
+    }
+    final bytes = ptr.asTypedList(len);
+    return utf8.decode(bytes, allowMalformed: true);
+  }
+
+  /// 获取当前存活弹幕数
+  int aliveCount(Pointer<_EngineHandle> engine) {
+    _checkEngine(engine);
+    return _aliveCount(engine);
+  }
 
   /// 检查引擎句柄是否有效
   void _checkEngine(Pointer<_EngineHandle> engine) {

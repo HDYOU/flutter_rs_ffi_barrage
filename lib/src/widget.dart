@@ -65,22 +65,15 @@ class BarrageController extends ChangeNotifier {
   /// 创建弹幕控制器
   ///
   /// - [width] / [height]: 初始渲染尺寸（像素）
-  /// - [fontRatio]: 字体大小占高度比例
   /// - [speed]: 滚动速度倍率
   /// - [autoPlay]: 是否自动开始播放
   factory BarrageController({
     int width = 1920,
     int height = 1080,
-    double fontRatio = 0.04,
     double speed = 1.0,
     bool autoPlay = true,
   }) {
-    final engine = BarrageEngine(
-      width: width,
-      height: height,
-      fontRatio: fontRatio,
-      speed: speed,
-    );
+    final engine = BarrageEngine(width: width, height: height, speed: speed);
     return BarrageController._(engine, autoPlay);
   }
 

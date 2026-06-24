@@ -38,7 +38,7 @@ class BarrageEngine {
   final BarrageFfiBind _bind = BarrageFfiBind.instance;
 
   /// Rust 引擎不透明句柄
-  Pointer<_OpaqueEngine> _handle = nullptr;
+  Pointer<_EngineOpaque> _handle = nullptr;
 
   /// 渲染区域宽度（像素）
   int _width;
@@ -58,27 +58,33 @@ class BarrageEngine {
   ///
   /// 由 [Pointer.fromFunction] 创建，需要保持引用防止 GC 回收回调函数。
   // ignore: unused_field
-  Pointer<NativeFunction<_EmojiBitmapCallbackNative>>? _nativeCallbackPtr;
+  Pointer<NativeFunction<_EmojiCallbackNative>>? _nativeCallbackPtr;
+
+  /// 渲染输出缓冲区（Dart 侧管理的 native 内存）
+  Pointer<Uint32> _renderBuffer = nullptr;
+  int _renderBufferSize = 0;
 
   /// 创建弹幕引擎
   ///
   /// - [width] / [height]: 渲染区域尺寸（像素）
-  /// - [fontRatio]: 字体大小占画布高度的比例（默认 0.04）
   /// - [speed]: 弹幕滚动速度倍率（默认 1.0）
   ///
   /// 抛出 [StateError] 如果 native 库加载失败或引擎创建失败。
   factory BarrageEngine({
     required int width,
     required int height,
-    double fontRatio = 0.04,
     double speed = 1.0,
   }) {
     final bind = BarrageFfiBind.instance;
-    final handle = bind.createEngine(width, height, fontRatio, speed);
+    final handle = bind.createEngine(width, height);
     if (handle == nullptr) {
       throw StateError('Failed to create barrage engine');
     }
-    return BarrageEngine._(handle, width, height);
+    final engine = BarrageEngine._(handle.cast<_EngineOpaque>(), width, height);
+    if (speed != 1.0) {
+      engine.setSpeed(speed);
+    }
+    return engine;
   }
 
   BarrageEngine._(this._handle, this._width, this._height);
@@ -109,6 +115,13 @@ class BarrageEngine {
       _handle = nullptr;
     }
 
+    // 释放渲染缓冲区
+    if (_renderBuffer != nullptr) {
+      malloc.free(_renderBuffer);
+      _renderBuffer = nullptr;
+      _renderBufferSize = 0;
+    }
+
     _emojiCallback = null;
     _nativeCallbackPtr = null;
   }
@@ -121,6 +134,21 @@ class BarrageEngine {
         'Cannot call methods on a disposed engine.',
       );
     }
+  }
+
+  /// 确保渲染缓冲区大小足够
+  void _ensureRenderBuffer(int width, int height) {
+    final needed = width * height;
+    if (_renderBufferSize >= needed && _renderBuffer != nullptr) return;
+
+    // 释放旧缓冲区
+    if (_renderBuffer != nullptr) {
+      malloc.free(_renderBuffer);
+    }
+
+    // 分配新缓冲区（u32 数组，每个像素一个 u32 = RGBA8888）
+    _renderBuffer = malloc.allocate<Uint32>(needed);
+    _renderBufferSize = needed;
   }
 
   // -----------------------------------------------------------------------
@@ -138,6 +166,8 @@ class BarrageEngine {
     _bind.resize(_handle.cast(), width, height);
     _width = width;
     _height = height;
+    // 重新分配渲染缓冲区
+    _ensureRenderBuffer(width, height);
   }
 
   // -----------------------------------------------------------------------
@@ -186,19 +216,32 @@ class BarrageEngine {
   ///
   /// 弹幕会根据 [BarrageMsg.timestamp] 被放入对应的时间位置。
   /// 对于实时弹幕，通常将 timestamp 设置为当前播放时间。
-  void push(BarrageMsg msg) {
+  ///
+  /// 返回 true 表示推送成功，false 表示失败（参数无效或被过滤）。
+  bool push(BarrageMsg msg) {
     _checkAlive();
-    _bind.pushBarrage(_handle.cast(), msg);
+    return _bind.pushBarrage(_handle.cast(), msg);
   }
 
   /// 批量推送多条弹幕
   ///
-  /// 比循环调用 [push] 更高效（减少 FFI 调用开销可忽略，主要是方便）。
-  void pushAll(List<BarrageMsg> messages) {
+  /// 比循环调用 [push] 更高效。
+  /// 返回成功推送的数量。
+  int pushAll(List<BarrageMsg> messages) {
     _checkAlive();
+    int count = 0;
     for (final msg in messages) {
-      _bind.pushBarrage(_handle.cast(), msg);
+      if (_bind.pushBarrage(_handle.cast(), msg)) {
+        count++;
+      }
     }
+    return count;
+  }
+
+  /// 获取当前存活弹幕数
+  int get aliveCount {
+    _checkAlive();
+    return _bind.aliveCount(_handle.cast());
   }
 
   // -----------------------------------------------------------------------
@@ -214,13 +257,26 @@ class BarrageEngine {
   Uint8List? renderFrame(int timestampMs) {
     _checkAlive();
 
-    final ptr = _bind.renderFrame(_handle.cast(), timestampMs);
-    if (ptr == nullptr) return null;
+    // 确保缓冲区存在
+    _ensureRenderBuffer(_width, _height);
 
-    final bufferSize = _width * _height * 4;
+    final count = _bind.renderFrame(
+      _handle.cast(),
+      timestampMs,
+      _renderBuffer,
+      _renderBufferSize,
+    );
+
+    if (count < 0) return null;
+
+    // 从 native 内存拷贝到 Dart 托管内存
+    // _renderBuffer 是 Uint32 数组，每个元素代表一个像素（RGBA8888）
+    // 转换为 Uint8List 需要乘以 4
+    final byteCount = _renderBufferSize * 4;
     try {
-      // 从 native 内存拷贝到 Dart 托管内存
-      return Uint8List.fromList(ptr.asTypedList(bufferSize));
+      return Uint8List.fromList(
+        _renderBuffer.cast<Uint8>().asTypedList(byteCount),
+      );
     } catch (_) {
       return null;
     }
@@ -230,11 +286,12 @@ class BarrageEngine {
   // Emoji 回调注册
   // -----------------------------------------------------------------------
 
-  /// 设置 emoji 位图请求回调
+  /// 设置 emoji 位图请求回调（全局）
   ///
   /// 当 Rust 渲染引擎遇到未注册的 emoji 时，会通过此回调向 Flutter
   /// 请求位图。回调函数需要返回 RGBA8888 格式的像素数据。
   ///
+  /// 注意：这是全局回调，不针对特定引擎实例。
   /// 回调会在渲染线程中被调用，注意线程安全。
   ///
   /// 传入 null 可取消回调。
@@ -243,26 +300,25 @@ class BarrageEngine {
 
     // 保存 Dart 回调引用
     _emojiCallback = callback;
+    // 同步到静态变量，供静态桥接函数使用
+    BarrageEngine._globalEmojiCallback = callback;
 
     if (callback == null) {
       // 取消回调
-      _bind.setEmojiBitmapCallback(_handle.cast(), nullptr);
+      _bind.setEmojiBitmapCallback(nullptr);
       _nativeCallbackPtr = null;
       return;
     }
 
     // 创建 native 回调桥接函数
     // 注意：fromFunction 要求静态/顶层函数，所以我们使用静态方法
-    final nativePtr = Pointer.fromFunction<_EmojiBitmapCallbackNative>(
+    final nativePtr = Pointer.fromFunction<_EmojiCallbackNative>(
       _emojiCallbackBridge,
       false, // 异常时返回 false
     );
 
     _nativeCallbackPtr = nativePtr;
-    _bind.setEmojiBitmapCallback(_handle.cast(), nativePtr);
-
-    // 将当前引擎实例注册到静态映射，供桥接函数查找
-    _engineMap[_handle.address] = this;
+    _bind.setEmojiBitmapCallback(nativePtr);
   }
 
   /// 同步查询 emoji 位图（从 Flutter 侧回调获取）
@@ -302,7 +358,9 @@ class BarrageEngine {
   /// - [emojiText]: emoji 文本（如 "😀"）
   /// - [pixels]: RGBA8888 像素数据
   /// - [width] / [height]: 位图尺寸
-  void registerEmojiFromFlutterBitmap(
+  ///
+  /// 返回 true 表示注册成功。
+  bool registerEmojiFromFlutterBitmap(
     String emojiText,
     Uint8List pixels,
     int width,
@@ -321,16 +379,17 @@ class BarrageEngine {
 
     // 将像素数据拷贝到 native 内存
     // Rust 侧会再次拷贝到自己的缓存，所以这里用完即可释放
-    using((Arena arena) {
+    return using((Arena arena) {
       final pixelPtr = arena.allocate<Uint8>(pixels.length);
       pixelPtr.asTypedList(pixels.length).setAll(0, pixels);
 
-      _bind.registerEmojiFromFlutter(
+      return _bind.registerEmojiFromFlutter(
         _handle.cast(),
         emojiText,
-        pixelPtr,
         width,
         height,
+        pixelPtr,
+        pixels.length,
       );
     });
   }
@@ -338,7 +397,8 @@ class BarrageEngine {
   /// 从本地文件路径注册 emoji
   ///
   /// 由 Rust 侧读取并解码图片文件。支持常见格式（PNG, JPG 等）。
-  void registerEmojiFromLocalPath(String emojiText, String path) {
+  /// 返回 true 表示注册成功。
+  bool registerEmojiFromLocalPath(String emojiText, String path) {
     _checkAlive();
     if (emojiText.isEmpty) {
       throw ArgumentError('emojiText cannot be empty');
@@ -346,13 +406,15 @@ class BarrageEngine {
     if (path.isEmpty) {
       throw ArgumentError('path cannot be empty');
     }
-    _bind.registerEmojiFromLocalPath(_handle.cast(), emojiText, path);
+    return _bind.registerEmojiFromLocalPath(_handle.cast(), emojiText, path);
   }
 
   /// 从网络 URL 注册 emoji
   ///
-  /// 由 Rust 侧异步下载并解码图片。下载完成前使用占位符。
-  void registerEmojiFromUrl(String emojiText, String url) {
+  /// 由 Rust 侧同步下载并解码图片。建议先在 Flutter 侧异步下载后
+  /// 通过 registerEmojiFromFlutterBitmap 注册。
+  /// 返回 true 表示注册成功。
+  bool registerEmojiFromUrl(String emojiText, String url) {
     _checkAlive();
     if (emojiText.isEmpty) {
       throw ArgumentError('emojiText cannot be empty');
@@ -360,7 +422,7 @@ class BarrageEngine {
     if (url.isEmpty) {
       throw ArgumentError('url cannot be empty');
     }
-    _bind.registerEmojiFromUrl(_handle.cast(), emojiText, url);
+    return _bind.registerEmojiFromUrl(_handle.cast(), emojiText, url);
   }
 
   // -----------------------------------------------------------------------
@@ -397,11 +459,8 @@ class BarrageEngine {
   // 静态桥接 - Emoji 回调
   // -----------------------------------------------------------------------
 
-  /// 引擎实例映射表
-  ///
-  /// 用于在静态回调函数中查找对应的 [BarrageEngine] 实例。
-  /// 键为 Rust 引擎句柄的内存地址。
-  static final Map<int, BarrageEngine> _engineMap = {};
+  /// 当前注册的全局 emoji 回调（静态，供桥接函数使用）
+  static EmojiBitmapCallback? _globalEmojiCallback;
 
   /// Emoji 位图回调的静态桥接函数
   ///
@@ -422,49 +481,24 @@ class BarrageEngine {
       final emojiStr = utf8DecodeFromPointer(emojiText, textLen);
       if (emojiStr.isEmpty) return false;
 
-      // 注意：由于是静态回调，我们无法直接获取对应的引擎实例。
-      // 实际使用中，通常只有一个引擎实例，或者通过其他方式关联。
-      // 这里提供一个简化实现：使用第一个注册了回调的引擎。
-      //
-      // 如果需要多引擎支持，可以通过 user_data 或 TLS 传递引擎上下文。
-
-      // 从所有已注册的引擎中查找匹配的回调
-      // 简化版本：取第一个有回调的引擎
-      EmojiBitmapCallback? callback;
-      for (final engine in _engineMap.values) {
-        if (engine._emojiCallback != null) {
-          callback = engine._emojiCallback;
-          break;
-        }
-      }
-
+      final callback = _globalEmojiCallback;
       if (callback == null) return false;
 
       // 调用 Dart 回调获取位图
-      // 默认使用 64x64 尺寸，实际尺寸由回调决定
-      // 这里我们假设回调会根据内容返回合适的尺寸
-      // 但 FFI 签名中没有传入期望尺寸，所以使用默认值
       const defaultSize = 64;
       final pixels = callback(emojiStr, defaultSize, defaultSize);
       if (pixels == null || pixels.isEmpty) return false;
 
-      // 计算实际尺寸（假设为正方形，实际需要回调返回尺寸信息）
-      // 由于当前回调签名限制，这里做简化处理
-      // 实际项目中建议回调返回 EmojiBitmapResult 或类似结构
       final pixelLen = pixels.length;
       if (pixelLen % 4 != 0) return false;
       final totalPixels = pixelLen ~/ 4;
 
-      // 估算宽高（假设为正方形或已知比例）
-      // 简化：假设宽度=高度
+      // 估算宽高（假设为正方形）
       int w = defaultSize;
       int h = defaultSize;
       if (totalPixels > 0) {
-        // 尝试找到最接近正方形的尺寸
         w = totalPixels ~/ h;
         if (w * h != totalPixels) {
-          // 如果不是正方形，尝试调整
-          // 简化处理：按传入的默认尺寸
           w = defaultSize;
           h = totalPixels ~/ w;
           if (h <= 0 || w * h > totalPixels) {
@@ -474,7 +508,6 @@ class BarrageEngine {
       }
 
       // 分配输出像素内存（Rust 侧使用后负责释放）
-      // 注意：这里使用 malloc 分配，Rust 侧需要用对应的 free 释放
       final pixelPtr = malloc.allocate<Uint8>(pixelLen);
       pixelPtr.asTypedList(pixelLen).setAll(0, pixels);
 
@@ -493,18 +526,14 @@ class BarrageEngine {
 }
 
 // ---------------------------------------------------------------------------
-// 类型别名 - 引擎不透明句柄
+// 类型别名
 // ---------------------------------------------------------------------------
 
 /// 引擎不透明句柄类型
-///
-/// 使用 Opaque 表示 Rust 侧的不透明类型，Dart 侧无法直接访问内部字段。
-typedef _OpaqueEngine = Opaque;
+typedef _EngineOpaque = Opaque;
 
 /// Emoji 位图回调的 Native 签名（与 ffi_bind.dart 中一致）
-///
-/// 这里重复定义是为了避免在 engine.dart 中暴露内部 FFI 类型。
-typedef _EmojiBitmapCallbackNative =
+typedef _EmojiCallbackNative =
     Bool Function(
       Pointer<Uint8> emojiText,
       Uint64 textLen,
