@@ -5,12 +5,62 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_rs_ffi_barrage/flutter_rs_ffi_barrage.dart';
 
+import 'crash_report_page.dart';
+
 // ---------------------------------------------------------------------------
-// 程序入口
+// 程序入口 & 全局异常捕获
 // ---------------------------------------------------------------------------
 
+/// 全局 NavigatorKey，用于在异常时导航到错误页面
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
-  runApp(const BarrageDemoApp());
+  // 捕获 Flutter 框架层异常（build 阶段、布局阶段等）
+  FlutterError.onError = (FlutterErrorDetails details) {
+    _handleError(details.exception, details.stack);
+  };
+
+  // 捕获 Dart 异步异常（未被 Zone 捕获的 Future 异常）
+  PlatformDispatcher.instance.onError = (error, stack) {
+    _handleError(error, stack);
+    return true;
+  };
+
+  // 使用 runZonedGuarded 包裹 runApp，捕获同步异常
+  runZonedGuarded(
+    () => runApp(const BarrageDemoApp()),
+    (error, stack) => _handleError(error, stack),
+  );
+}
+
+/// 全局异常处理
+void _handleError(dynamic error, StackTrace? stackTrace) {
+  // 记录到历史
+  crashHistory.add(CrashInfo(error, stackTrace, DateTime.now()));
+
+  // 打印到控制台（便于调试）
+  debugPrint('═══════════════════════════════════════════════════');
+  debugPrint('⚠️  捕获到未处理异常:');
+  debugPrint('$error');
+  if (stackTrace != null) {
+    debugPrint('Stack trace:');
+    debugPrint('$stackTrace');
+  }
+  debugPrint('═══════════════════════════════════════════════════');
+
+  // 导航到异常页面
+  final ctx = navigatorKey.currentContext;
+  if (ctx != null) {
+    Navigator.of(ctx).push(
+      MaterialPageRoute(
+        builder: (context) => CrashReportPage(
+          error: error,
+          stackTrace: stackTrace,
+        ),
+        fullscreenDialog: true,
+      ),
+    );
+  }
 }
 
 /// 弹幕演示应用
@@ -20,6 +70,7 @@ class BarrageDemoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Flutter Rust FFI 弹幕演示',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
