@@ -178,7 +178,7 @@ pub fn linear_gradient(colors: &[Color], stops: &[f32], t: f32) -> Color {
 
     // 找到 t 所在的区间
     let idx = stops.iter().position(|&s| s >= t).unwrap_or(stops.len()) - 1;
-    let idx = idx.max(0).min(colors.len() - 2);
+    let idx = idx.min(colors.len() - 2);
 
     let t0 = stops[idx];
     let t1 = stops[idx + 1];

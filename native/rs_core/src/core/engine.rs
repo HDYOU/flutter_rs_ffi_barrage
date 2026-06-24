@@ -162,7 +162,7 @@ impl BarrageEngine {
 
     /// 设置播放速度
     pub fn set_speed(&mut self, speed: f32) {
-        self.speed_multiplier = speed.max(0.1).min(10.0);
+        self.speed_multiplier = speed.clamp(0.1, 10.0);
         self.track_manager.set_speed(150.0 * self.speed_multiplier);
     }
 

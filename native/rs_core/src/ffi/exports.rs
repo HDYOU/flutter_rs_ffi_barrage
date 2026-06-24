@@ -16,6 +16,8 @@
 //! - *mut u32, *mut u64
 //! - bool, f32
 
+#![allow(clippy::missing_safety_doc)]
+
 use crate::core::engine::BarrageEngine;
 use crate::ffi::callbacks::{self, EmojiBitmapRawCallback};
 use crate::render::renderer::BarrageRenderer;
@@ -160,7 +162,7 @@ pub unsafe extern "C" fn barrage_engine_set_speed(engine_ptr: *mut u8, speed: f3
     };
 
     // 速度范围校验
-    if speed.is_nan() || speed.is_infinite() || speed < 0.1 || speed > 10.0 {
+    if speed.is_nan() || speed.is_infinite() || !(0.1..=10.0).contains(&speed) {
         return;
     }
 
@@ -268,7 +270,7 @@ pub unsafe extern "C" fn barrage_engine_push(
     }
 
     // 字体大小校验
-    if font_size < 8 || font_size > 200 {
+    if !(8..=200).contains(&font_size) {
         return false;
     }
 
@@ -547,7 +549,7 @@ pub unsafe extern "C" fn set_global_stroke(
     };
 
     // 参数校验
-    if width.is_nan() || width.is_infinite() || width < 0.0 || width > 50.0 {
+    if width.is_nan() || width.is_infinite() || !(0.0..=50.0).contains(&width) {
         return;
     }
 
@@ -584,7 +586,7 @@ pub unsafe extern "C" fn set_global_shadow(
     if offset_y.is_nan() || offset_y.is_infinite() || offset_y.abs() > 100.0 {
         return;
     }
-    if blur.is_nan() || blur.is_infinite() || blur < 0.0 || blur > 100.0 {
+    if blur.is_nan() || blur.is_infinite() || !(0.0..=100.0).contains(&blur) {
         return;
     }
 
@@ -615,10 +617,10 @@ pub unsafe extern "C" fn set_global_neon(
     };
 
     // 参数校验
-    if radius.is_nan() || radius.is_infinite() || radius < 0.0 || radius > 200.0 {
+    if radius.is_nan() || radius.is_infinite() || !(0.0..=200.0).contains(&radius) {
         return;
     }
-    if intensity.is_nan() || intensity.is_infinite() || intensity < 0.0 || intensity > 3.0 {
+    if intensity.is_nan() || intensity.is_infinite() || !(0.0..=3.0).contains(&intensity) {
         return;
     }
 

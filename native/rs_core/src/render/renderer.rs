@@ -163,6 +163,7 @@ impl FrameBuffer {
     }
 
     /// 绘制缩放后的位图（最近邻采样）
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_bitmap_scaled(
         &mut self,
         dst_x: i32,

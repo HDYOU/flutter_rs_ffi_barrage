@@ -350,7 +350,7 @@ mod tests {
     #[test]
     fn test_stroke_effect_default() {
         let stroke = StrokeEffect::default();
-        assert_eq!(stroke.enabled, false);
+        assert!(!stroke.enabled);
         assert_eq!(stroke.width, 2.0);
     }
 

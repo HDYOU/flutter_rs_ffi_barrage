@@ -34,6 +34,7 @@ pub fn clamp_u32(value: u32, min: u32, max: u32) -> u32 {
 
 /// 检查矩形是否相交（AABB 碰撞检测）
 #[inline]
+#[allow(clippy::too_many_arguments)]
 pub fn rect_intersects(
     x1: f32,
     y1: f32,
@@ -116,6 +117,7 @@ pub fn pack_rgba_to_u32(r: u8, g: u8, b: u8, a: u8) -> u32 {
 
 /// 预乘 Alpha 的颜色混合（源 over 目标）
 #[inline]
+#[allow(clippy::too_many_arguments)]
 pub fn blend_premultiplied(
     src_r: u8,
     src_g: u8,
@@ -141,6 +143,7 @@ pub fn blend_premultiplied(
 
 /// 非预乘 Alpha 的颜色混合
 #[inline]
+#[allow(clippy::too_many_arguments)]
 pub fn blend_unmultiplied(
     src_r: u8,
     src_g: u8,

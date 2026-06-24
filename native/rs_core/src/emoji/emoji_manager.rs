@@ -109,7 +109,7 @@ impl EmojiManager {
 
     /// 设置表情大小比例
     pub fn set_emoji_scale(&mut self, scale: f32) {
-        self.emoji_scale = scale.max(0.5).min(3.0);
+        self.emoji_scale = scale.clamp(0.5, 3.0);
     }
 
     /// 检查表情是否已加载
