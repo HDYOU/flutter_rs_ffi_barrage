@@ -164,7 +164,7 @@ packages:
     source: hosted
     version: "1.17.0"
   native_toolchain_rust:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: native_toolchain_rust
       sha256: faa57d2258a3b0fd2a634054f54e4496c9fcbd971977e7d2b7e6916d56892857
