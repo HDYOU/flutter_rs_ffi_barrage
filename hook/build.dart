@@ -224,24 +224,83 @@ void _installRustHint() {
   _info('');
 }
 
+/// Auto-detect Android NDK from common locations and environment variables.
+///
+/// Search order:
+///   1. ANDROID_NDK_HOME
+///   2. ANDROID_NDK
+///   3. NDK_HOME
+///   4. ANDROID_HOME/ndk/* (pick latest version)
+///   5. ANDROID_SDK_ROOT/ndk/*
+Future<String?> _findAndroidNdk() async {
+  // Direct NDK path environment variables
+  final directVars = ['ANDROID_NDK_HOME', 'ANDROID_NDK', 'NDK_HOME'];
+  for (final varName in directVars) {
+    final val = Platform.environment[varName];
+    if (val != null && val.isNotEmpty) {
+      final dir = Directory(val);
+      if (await dir.exists()) {
+        return val;
+      }
+    }
+  }
+
+  // Auto-detect from Android SDK ndk/ directory
+  final sdkVars = ['ANDROID_HOME', 'ANDROID_SDK_ROOT'];
+  for (final varName in sdkVars) {
+    final sdkPath = Platform.environment[varName];
+    if (sdkPath == null || sdkPath.isEmpty) continue;
+    final ndkDir = Directory('$sdkPath/ndk');
+    if (!await ndkDir.exists()) continue;
+
+    // Find the latest NDK version directory
+    String? latest;
+    await for (final entity in ndkDir.list()) {
+      if (entity is Directory) {
+        final name = entity.uri.pathSegments.lastWhere(
+          (s) => s.isNotEmpty,
+          orElse: () => '',
+        );
+        if (name.isEmpty) continue;
+        // Prefer directories that look like version numbers
+        if (latest == null || name.compareTo(latest) > 0) {
+          latest = name;
+        }
+      }
+    }
+    if (latest != null) {
+      final ndkPath = '$sdkPath/ndk/$latest';
+      if (await Directory(ndkPath).exists()) {
+        return ndkPath;
+      }
+    }
+  }
+
+  return null;
+}
+
 Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
-  final ndkHome =
-      Platform.environment['ANDROID_NDK_HOME'] ??
-      Platform.environment['ANDROID_NDK'] ??
-      Platform.environment['NDK_HOME'];
+  final ndkHome = await _findAndroidNdk();
 
   if (ndkHome == null) {
-    _error('ANDROID_NDK_HOME environment variable not set');
-    _info('💡 Please set the Android NDK path:');
+    _error('Android NDK not found');
+    _info('💡 Set one of the following environment variables:');
     _info('   export ANDROID_NDK_HOME=/path/to/ndk');
-    throw Exception('ANDROID_NDK_HOME not set');
+    _info('   export ANDROID_NDK=/path/to/ndk');
+    _info('   export ANDROID_HOME=/path/to/android-sdk  (auto-detects ndk/*)');
+    _info('');
+    _info('💡 Or install Android NDK via SDK Manager:');
+    _info('   sdkmanager --install "ndk;26.2.11394342"');
+    throw Exception(
+      'Android NDK not found. Set ANDROID_NDK_HOME or ANDROID_HOME.',
+    );
   }
 
   _info('✅ Android NDK: $ndkHome');
 
   // Map Rust target to NDK toolchain prefix
   final toolchainPrefix = _ndkToolchainPrefix(rustTarget);
-  final toolchainDir = _ndkToolchainDir(ndkHome);
+  final toolchainDir = await _ndkToolchainDir(ndkHome);
 
   final targetEnv = _targetTripleEnv(rustTarget);
   final env = <String, String>{
@@ -270,8 +329,32 @@ String _ndkToolchainPrefix(String rustTarget) {
   }
 }
 
-String _ndkToolchainDir(String ndkHome) {
-  // NDK 23+ toolchain path
+Future<String> _ndkToolchainDir(String ndkHome) async {
+  // NDK 23+ toolchain path – auto-detect host prebuilt directory
+  final prebuiltDir = Directory('$ndkHome/toolchains/llvm/prebuilt');
+  if (!await prebuiltDir.exists()) {
+    // Fallback to common patterns
+    final host = Platform.operatingSystem;
+    String hostTag;
+    switch (host) {
+      case 'macos':
+        hostTag = 'darwin-x86_64';
+      case 'windows':
+        hostTag = 'windows-x86_64';
+      case 'linux':
+      default:
+        hostTag = 'linux-x86_64';
+    }
+    return '$ndkHome/toolchains/llvm/prebuilt/$hostTag';
+  }
+
+  // Find the first (and typically only) prebuilt host directory
+  await for (final entity in prebuiltDir.list()) {
+    if (entity is Directory) {
+      return entity.path;
+    }
+  }
+
   return '$ndkHome/toolchains/llvm/prebuilt/linux-x86_64';
 }
 
