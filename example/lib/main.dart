@@ -229,9 +229,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           }
 
           // 脸部填充色
-          pixels[idx] = faceColor.red;
-          pixels[idx + 1] = faceColor.green;
-          pixels[idx + 2] = faceColor.blue;
+          pixels[idx] = (faceColor.r * 255).round().clamp(0, 255);
+          pixels[idx + 1] = (faceColor.g * 255).round().clamp(0, 255);
+          pixels[idx + 2] = (faceColor.b * 255).round().clamp(0, 255);
           pixels[idx + 3] = (255 * alpha).round();
         } else {
           // 透明背景
@@ -306,9 +306,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
             pixels[idx + 3] = (255 * alpha).round();
           } else {
             // 背景色
-            pixels[idx] = bgColor.red;
-            pixels[idx + 1] = bgColor.green;
-            pixels[idx + 2] = bgColor.blue;
+            pixels[idx] = (bgColor.r * 255).round().clamp(0, 255);
+            pixels[idx + 1] = (bgColor.g * 255).round().clamp(0, 255);
+            pixels[idx + 2] = (bgColor.b * 255).round().clamp(0, 255);
             pixels[idx + 3] = (255 * alpha).round();
           }
         } else {
@@ -389,9 +389,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
           final dist = sqrt(dx * dx + dy * dy);
           final ratio = 1.0 - (dist / outerR) * 0.3;
 
-          pixels[idx] = (color.red * ratio).clamp(0, 255).toInt();
-          pixels[idx + 1] = (color.green * ratio).clamp(0, 255).toInt();
-          pixels[idx + 2] = (color.blue * ratio).clamp(0, 255).toInt();
+          pixels[idx] = (color.r * 255 * ratio).round().clamp(0, 255);
+          pixels[idx + 1] = (color.g * 255 * ratio).round().clamp(0, 255);
+          pixels[idx + 2] = (color.b * 255 * ratio).round().clamp(0, 255);
           pixels[idx + 3] = 255;
         } else {
           pixels[idx] = 0;
@@ -580,7 +580,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
     return TextEffectConfig(
       stroke:
           _strokeEnabled
-              ? const StrokeConfig.enabled(
+              ? StrokeConfig.enabled(
                 width: 2.5,
                 color: Color(0xFF000000),
                 isOuter: true,
@@ -588,7 +588,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               : const StrokeConfig(),
       shadow:
           _shadowEnabled
-              ? const ShadowConfig.enabled(
+              ? ShadowConfig.enabled(
                 offsetX: 3.0,
                 offsetY: 3.0,
                 blur: 0.0,
@@ -598,7 +598,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               : const ShadowConfig(),
       neon:
           _neonEnabled
-              ? const NeonConfig.enabled(
+              ? NeonConfig.enabled(
                 radius: 10.0,
                 color: Color(0xFFFF00FF),
                 intensity: 0.8,
@@ -607,7 +607,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               : const NeonConfig(),
       gradient:
           _gradientEnabled
-              ? const GradientConfig.enabled(
+              ? GradientConfig.enabled(
                 type: GradientType.rainbow,
                 colors: [],
                 angle: 0.0,
@@ -649,7 +649,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: const TextEffectConfig(
+        textEffects: TextEffectConfig(
           stroke: StrokeConfig.enabled(
             width: 3.0,
             color: Color(0xFFFF0000),
@@ -671,7 +671,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFD700),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: const TextEffectConfig(
+        textEffects: TextEffectConfig(
           shadow: ShadowConfig.enabled(
             offsetX: 4.0,
             offsetY: 4.0,
@@ -695,7 +695,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: const TextEffectConfig(
+        textEffects: TextEffectConfig(
           neon: NeonConfig.enabled(
             radius: 12.0,
             color: Color(0xFF00FFFF),
@@ -718,7 +718,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: const TextEffectConfig(
+        textEffects: TextEffectConfig(
           gradient: GradientConfig.enabled(
             type: GradientType.rainbow,
             colors: [],
@@ -740,7 +740,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 36,
         timestamp: _controller.currentTime,
-        textEffects: const TextEffectConfig(
+        textEffects: TextEffectConfig(
           stroke: StrokeConfig.enabled(
             width: 2.0,
             color: Color(0xFF000000),
@@ -791,7 +791,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: _randomColor(),
         fontSize: 28,
         timestamp: _controller.currentTime,
-        textEffects: const TextEffectConfig(
+        textEffects: TextEffectConfig(
           stroke: StrokeConfig.enabled(width: 2.0, color: Color(0xFF000000)),
         ),
       ),
@@ -825,7 +825,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _strokeEnabled = value;
       _controller.setGlobalStroke(
         value
-            ? const StrokeConfig.enabled(width: 2.5, color: Color(0xFF000000))
+            ? StrokeConfig.enabled(width: 2.5, color: Color(0xFF000000))
             : const StrokeConfig(),
       );
     });
@@ -836,7 +836,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _shadowEnabled = value;
       _controller.setGlobalShadow(
         value
-            ? const ShadowConfig.enabled(offsetX: 3.0, offsetY: 3.0, layers: 3)
+            ? ShadowConfig.enabled(offsetX: 3.0, offsetY: 3.0, layers: 3)
             : const ShadowConfig(),
       );
     });
@@ -847,7 +847,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _neonEnabled = value;
       _controller.setGlobalNeon(
         value
-            ? const NeonConfig.enabled(
+            ? NeonConfig.enabled(
               radius: 10.0,
               color: Color(0xFFFF00FF),
               layers: 4,
@@ -862,7 +862,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _gradientEnabled = value;
       _controller.setGlobalGradient(
         value
-            ? const GradientConfig.enabled(type: GradientType.rainbow)
+            ? GradientConfig.enabled(type: GradientType.rainbow)
             : const GradientConfig(),
       );
     });
@@ -935,7 +935,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1057,7 +1057,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: activeColor,
+          activeThumbColor: activeColor,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         Text(
@@ -1222,7 +1222,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.inversePrimary.withOpacity(0.3),
+        color: Theme.of(
+          context,
+        ).colorScheme.inversePrimary.withValues(alpha: 0.3),
         border: Border(top: BorderSide(color: Colors.grey.shade300)),
       ),
       child: Row(
@@ -1333,7 +1335,7 @@ class _BackgroundPainter extends CustomPainter {
     // 绘制几个装饰性圆形
     final paint =
         Paint()
-          ..color = Colors.white.withOpacity(0.05)
+          ..color = Colors.white.withValues(alpha: 0.05)
           ..style = PaintingStyle.fill;
 
     // 大圆形
@@ -1352,7 +1354,7 @@ class _BackgroundPainter extends CustomPainter {
     // 网格线
     final gridPaint =
         Paint()
-          ..color = Colors.white.withOpacity(0.03)
+          ..color = Colors.white.withValues(alpha: 0.03)
           ..strokeWidth = 1;
 
     const gridSize = 40.0;

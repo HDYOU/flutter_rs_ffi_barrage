@@ -1114,10 +1114,10 @@ class BarrageFfiBind {
 
   /// 将 Color 转为 32 位 RGBA 整数（0xRRGGBBAA）
   static int _colorToRgba(Color color) {
-    return ((color.red & 0xFF) << 24) |
-        ((color.green & 0xFF) << 16) |
-        ((color.blue & 0xFF) << 8) |
-        ((color.opacity * 255).round().clamp(0, 255));
+    return (((color.r * 255).round().clamp(0, 255) & 0xFF) << 24) |
+        (((color.g * 255).round().clamp(0, 255) & 0xFF) << 16) |
+        (((color.b * 255).round().clamp(0, 255) & 0xFF) << 8) |
+        ((color.a * 255).round().clamp(0, 255));
   }
 }
 
