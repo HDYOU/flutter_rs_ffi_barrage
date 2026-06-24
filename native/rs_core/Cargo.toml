@@ -42,3 +42,6 @@ criterion = "0.5"
 # [[bench]]
 # name = "render_bench"
 # harness = false
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ["cfg(frb_expand)"] }

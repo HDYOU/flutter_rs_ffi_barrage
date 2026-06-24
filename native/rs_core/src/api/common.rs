@@ -90,23 +90,12 @@ impl Default for GradientConfig {
 }
 
 #[frb]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TextEffectConfig {
     pub stroke: StrokeConfig,
     pub shadow: ShadowConfig,
     pub neon: NeonConfig,
     pub gradient: GradientConfig,
-}
-
-impl Default for TextEffectConfig {
-    fn default() -> Self {
-        Self {
-            stroke: StrokeConfig::default(),
-            shadow: ShadowConfig::default(),
-            neon: NeonConfig::default(),
-            gradient: GradientConfig::default(),
-        }
-    }
 }
 
 impl TextEffectConfig {
