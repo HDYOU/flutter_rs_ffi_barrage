@@ -70,19 +70,16 @@ void main(List<String> args) async {
     // -------------------------------------------------------------------
     _step('🔨 编译准备');
 
-    final rsCoreDir =
-        Directory.fromUri(packageRoot.resolve('native/rs_core/'));
+    final rsCoreDir = Directory.fromUri(packageRoot.resolve('native/rs_core/'));
     if (!await rsCoreDir.exists()) {
-      throw Exception(
-        'Rust source directory not found: ${rsCoreDir.path}',
-      );
+      throw Exception('Rust source directory not found: ${rsCoreDir.path}');
     }
 
     final libName = _libNameFor(targetOS);
-    final targetDir =
-        Directory.fromUri(rsCoreDir.uri.resolve('target/$rustTarget/$buildMode/'));
-    final libPath =
-        File.fromUri(targetDir.uri.resolve(libName));
+    final targetDir = Directory.fromUri(
+      rsCoreDir.uri.resolve('target/$rustTarget/$buildMode/'),
+    );
+    final libPath = File.fromUri(targetDir.uri.resolve(libName));
 
     final outDir = input.outputDirectoryShared;
     if (!await Directory.fromUri(outDir).exists()) {
@@ -91,9 +88,7 @@ void main(List<String> args) async {
 
     // 增量编译检查：基于源码文件修改时间
     final sourceHash = await _computeSourceHash(rsCoreDir);
-    final hashFile = File.fromUri(
-      outDir.resolve('.build_hash_$rustTarget'),
-    );
+    final hashFile = File.fromUri(outDir.resolve('.build_hash_$rustTarget'));
     final lastHash =
         await hashFile.exists() ? await hashFile.readAsString() : '';
 
@@ -105,12 +100,7 @@ void main(List<String> args) async {
       // -----------------------------------------------------------------
       _step('🚀 编译 Rust 核心库');
 
-      final cargoArgs = [
-        'build',
-        '--$buildMode',
-        '--target',
-        rustTarget,
-      ];
+      final cargoArgs = ['build', '--$buildMode', '--target', rustTarget];
 
       _info('cargo ${cargoArgs.join(' ')}');
 
@@ -160,8 +150,7 @@ void main(List<String> args) async {
     _step('📝 注册原生代码资产');
 
     // 拷贝产物到共享输出目录
-    final assetDirUri =
-        outDir.resolve('${targetOS.name}/${targetArch.name}/');
+    final assetDirUri = outDir.resolve('${targetOS.name}/${targetArch.name}/');
     final assetDir = Directory.fromUri(assetDirUri);
     if (!await assetDir.exists()) {
       await assetDir.create(recursive: true);
@@ -182,12 +171,8 @@ void main(List<String> args) async {
     );
 
     // 声明依赖（用于增量构建缓存失效）
-    output.dependencies.add(
-      packageRoot.resolve('native/rs_core/Cargo.toml'),
-    );
-    output.dependencies.add(
-      packageRoot.resolve('native/rs_core/build.rs'),
-    );
+    output.dependencies.add(packageRoot.resolve('native/rs_core/Cargo.toml'));
+    output.dependencies.add(packageRoot.resolve('native/rs_core/build.rs'));
 
     _info('✅ 代码资产已注册: package:$packageName/src/ffi_bind.dart');
 
@@ -226,17 +211,22 @@ Future<void> _checkRustToolchain() async {
 void _installRustHint() {
   _info('');
   _info('💡 Install Rust toolchain:');
-  _info('   macOS / Linux:  curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh');
+  _info(
+    '   macOS / Linux:  curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh',
+  );
   _info('   Windows:        Download from https://rustup.rs/');
   _info('');
   _info('💡 For Android cross-compilation:');
   _info('   - Set ANDROID_NDK_HOME environment variable');
-  _info('   - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android');
+  _info(
+    '   - rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android',
+  );
   _info('');
 }
 
 Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
-  final ndkHome = Platform.environment['ANDROID_NDK_HOME'] ??
+  final ndkHome =
+      Platform.environment['ANDROID_NDK_HOME'] ??
       Platform.environment['ANDROID_NDK'] ??
       Platform.environment['NDK_HOME'];
 
@@ -414,9 +404,13 @@ Future<String> _computeSourceHash(Directory rsCoreDir) async {
 
 void _section(String title) {
   stderr.writeln('');
-  stderr.writeln('╔══════════════════════════════════════════════════════════╗');
+  stderr.writeln(
+    '╔══════════════════════════════════════════════════════════╗',
+  );
   stderr.writeln('║  $title');
-  stderr.writeln('╚══════════════════════════════════════════════════════════╝');
+  stderr.writeln(
+    '╚══════════════════════════════════════════════════════════╝',
+  );
 }
 
 void _step(String title) {
