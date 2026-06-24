@@ -117,7 +117,12 @@ impl EngineHandle {
     #[frb(sync)]
     pub fn set_global_neon(&self, config: NeonConfig) {
         let mut engine = self.engine.lock().unwrap();
-        engine.set_global_neon(config.enabled, config.radius, config.color, config.intensity);
+        engine.set_global_neon(
+            config.enabled,
+            config.radius,
+            config.color,
+            config.intensity,
+        );
     }
 
     #[frb(sync)]

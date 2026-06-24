@@ -1,7 +1,7 @@
-use flutter_rust_bridge::frb;
 pub use crate::core::engine::PlayState;
 pub use crate::text_effect::effects::GradientType;
 pub use crate::track::track_manager::TrackType;
+use flutter_rust_bridge::frb;
 
 #[frb]
 #[derive(Debug, Clone)]
@@ -116,8 +116,7 @@ impl TextEffectConfig {
         if self.stroke.enabled {
             effects.stroke.enabled = true;
             effects.stroke.width = self.stroke.width;
-            effects.stroke.color =
-                crate::utils::color::Color::from_u32(self.stroke.color);
+            effects.stroke.color = crate::utils::color::Color::from_u32(self.stroke.color);
         }
 
         if self.shadow.enabled {
@@ -125,15 +124,13 @@ impl TextEffectConfig {
             effects.shadow.offset_x = self.shadow.offset_x;
             effects.shadow.offset_y = self.shadow.offset_y;
             effects.shadow.blur = self.shadow.blur;
-            effects.shadow.color =
-                crate::utils::color::Color::from_u32(self.shadow.color);
+            effects.shadow.color = crate::utils::color::Color::from_u32(self.shadow.color);
         }
 
         if self.neon.enabled {
             effects.neon.enabled = true;
             effects.neon.radius = self.neon.radius;
-            effects.neon.color =
-                crate::utils::color::Color::from_u32(self.neon.color);
+            effects.neon.color = crate::utils::color::Color::from_u32(self.neon.color);
             effects.neon.intensity = self.neon.intensity;
         }
 
