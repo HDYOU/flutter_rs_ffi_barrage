@@ -15,12 +15,27 @@ on:
         required: false
         default: 'Manual build'
         type: string
+      build_type:
+        description: 'Build type / 构建类型'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+      platforms:
+        description: 'Platforms to build / 构建平台（逗号分隔，留空构建全部）'
+        required: false
+        default: 'android,ios,windows,macos,linux'
+        type: string
 
 env:
   FLUTTER_VERSION: '3.41.0'
   PUB_CACHE: ${{ github.workspace }}/.pub-cache
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
+  # 构建类型：release 或 debug（手动触发时可选择，标签触发默认 release）
+  BUILD_TYPE: ${{ github.event.inputs.build_type || 'release' }}
 
 jobs:
   # =========================================================================
@@ -72,8 +87,8 @@ jobs:
       - name: 安装依赖 (flutter pub get)
         run: flutter pub get
 
-      - name: 构建 APK (flutter build apk --release)
-        run: flutter build apk --release --verbose
+      - name: 构建 APK (flutter build apk --${{ env.BUILD_TYPE }})
+        run: flutter build apk --${{ env.BUILD_TYPE }} --verbose
         continue-on-error: false
 
       - name: 收集 Android 产物
@@ -83,16 +98,17 @@ jobs:
           find build/app/intermediates/stripped_native_libs -name "*.so" -type f 2>/dev/null || true
           find build/app/outputs -name "*.so" -type f 2>/dev/null || true
           # 验证 APK
-          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
+          APK_PATH="build/app/outputs/flutter-apk/app-${{ env.BUILD_TYPE }}.apk"
+          if [ -f "$APK_PATH" ]; then
             echo "APK 构建成功"
-            ls -lh build/app/outputs/flutter-apk/app-release.apk
+            ls -lh "$APK_PATH"
           fi
 
       - name: 上传 Android APK (独立 artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: example/build/app/outputs/flutter-apk/app-release.apk
+          name: android-apk-${{ env.BUILD_TYPE }}
+          path: example/build/app/outputs/flutter-apk/app-${{ env.BUILD_TYPE }}.apk
           if-no-files-found: error
 
       - name: 上传 Android 构建产物 (.so 等)
@@ -146,8 +162,8 @@ jobs:
       - name: 安装依赖 (flutter pub get)
         run: flutter pub get
 
-      - name: 构建 iOS (flutter build ios --release --no-codesign)
-        run: flutter build ios --release --no-codesign --verbose
+      - name: 构建 iOS (flutter build ios --${{ env.BUILD_TYPE }} --no-codesign)
+        run: flutter build ios --${{ env.BUILD_TYPE }} --no-codesign --verbose
         continue-on-error: false
 
       - name: 收集 iOS 产物
@@ -156,8 +172,9 @@ jobs:
           # 查找 .framework 文件
           find build/ios -name "*.framework" -type d 2>/dev/null || true
           # 复制 framework
-          if [ -d build/ios/Release-iphoneos/Runner.app/Frameworks ]; then
-            cp -R build/ios/Release-iphoneos/Runner.app/Frameworks/*.framework ../build_artifacts/ios/ 2>/dev/null || true
+          BUILD_DIR="build/ios/$( [ "${{ env.BUILD_TYPE }}" = "release" ] && echo 'Release' || echo 'Debug' )-iphoneos"
+          if [ -d "$BUILD_DIR/Runner.app/Frameworks" ]; then
+            cp -R "$BUILD_DIR/Runner.app/Frameworks/"*.framework ../build_artifacts/ios/ 2>/dev/null || true
           fi
 
       - name: 上传 iOS 产物 (.framework)
@@ -212,17 +229,18 @@ jobs:
       - name: 安装依赖 (flutter pub get)
         run: flutter pub get
 
-      - name: 构建 Windows (flutter build windows --release)
-        run: flutter build windows --release --verbose
+      - name: 构建 Windows (flutter build windows --${{ env.BUILD_TYPE }})
+        run: flutter build windows --${{ env.BUILD_TYPE }} --verbose
         continue-on-error: false
 
       - name: 收集 Windows 产物
         run: |
           New-Item -ItemType Directory -Force -Path "../build_artifacts/windows"
           # 复制 dll 和 exe
-          if (Test-Path "build/windows/x64/runner/Release") {
-            Copy-Item -Path "build/windows/x64/runner/Release/*.dll" -Destination "../build_artifacts/windows/" -Recurse -Force
-            Copy-Item -Path "build/windows/x64/runner/Release/*.exe" -Destination "../build_artifacts/windows/" -Force
+          $buildDir = "build/windows/x64/runner/$(if('${{ env.BUILD_TYPE }}' -eq 'release') { 'Release' } else { 'Debug' })"
+          if (Test-Path $buildDir) {
+            Copy-Item -Path "$buildDir/*.dll" -Destination "../build_artifacts/windows/" -Recurse -Force
+            Copy-Item -Path "$buildDir/*.exe" -Destination "../build_artifacts/windows/" -Force
           }
 
       - name: 上传 Windows 产物 (.dll & .exe)
@@ -276,8 +294,8 @@ jobs:
       - name: 安装依赖 (flutter pub get)
         run: flutter pub get
 
-      - name: 构建 macOS (flutter build macos --release)
-        run: flutter build macos --release --verbose
+      - name: 构建 macOS (flutter build macos --${{ env.BUILD_TYPE }})
+        run: flutter build macos --${{ env.BUILD_TYPE }} --verbose
         continue-on-error: false
 
       - name: 收集 macOS 产物
@@ -286,8 +304,9 @@ jobs:
           # 查找并复制 .dylib 文件
           find build/macos -name "*.dylib" -type f 2>/dev/null || true
           # 从 app bundle 中复制 dylib
-          if [ -d build/macos/Build/Products/Release ]; then
-            find build/macos/Build/Products/Release -name "*.dylib" -exec cp {} ../build_artifacts/macos/ 2>/dev/null || true
+          BUILD_CFG="$( [ "${{ env.BUILD_TYPE }}" = "release" ] && echo 'Release' || echo 'Debug' )"
+          if [ -d "build/macos/Build/Products/$BUILD_CFG" ]; then
+            find "build/macos/Build/Products/$BUILD_CFG" -name "*.dylib" -exec cp {} ../build_artifacts/macos/ \; 2>/dev/null || true
           fi
 
       - name: 上传 macOS 产物 (.dylib)
@@ -362,8 +381,8 @@ jobs:
       - name: 安装依赖 (flutter pub get)
         run: flutter pub get
 
-      - name: 构建 Linux (flutter build linux --release)
-        run: flutter build linux --release --verbose
+      - name: 构建 Linux (flutter build linux --${{ env.BUILD_TYPE }})
+        run: flutter build linux --${{ env.BUILD_TYPE }} --verbose
         continue-on-error: false
 
       - name: 收集 Linux 产物
@@ -372,8 +391,8 @@ jobs:
           # 查找并复制 .so 文件
           find build/linux -name "*.so" -type f 2>/dev/null || true
           # 从构建目录复制
-          if [ -d build/linux/x64/release/bundle/lib ]; then
-            cp build/linux/x64/release/bundle/lib/*.so ../build_artifacts/linux/ 2>/dev/null || true
+          if [ -d "build/linux/x64/${{ env.BUILD_TYPE }}/bundle/lib" ]; then
+            cp "build/linux/x64/${{ env.BUILD_TYPE }}/bundle/lib/"*.so ../build_artifacts/linux/ 2>/dev/null || true
           fi
 
       - name: 上传 Linux 产物 (.so)
@@ -411,10 +430,10 @@ jobs:
           mkdir -p final-artifacts/linux
 
           # Android APK (独立 artifact)
-          if [ -f "all-artifacts/android-apk/app-release.apk" ]; then
-            cp all-artifacts/android-apk/app-release.apk final-artifacts/android/
+          if [ -f "all-artifacts/android-apk-${{ env.BUILD_TYPE }}/app-${{ env.BUILD_TYPE }}.apk" ]; then
+            cp "all-artifacts/android-apk-${{ env.BUILD_TYPE }}/app-${{ env.BUILD_TYPE }}.apk" final-artifacts/android/
             echo "APK 已复制到 final-artifacts/android/"
-            ls -lh final-artifacts/android/app-release.apk
+            ls -lh "final-artifacts/android/app-${{ env.BUILD_TYPE }}.apk"
           fi
           # Android 构建产物
           if [ -d "all-artifacts/android-build" ]; then
