@@ -79,23 +79,27 @@ jobs:
       - name: 收集 Android 产物
         run: |
           mkdir -p ../build_artifacts/android
-          # 复制 APK
-          cp build/app/outputs/flutter-apk/app-release.apk ../build_artifacts/android/
           # 复制 .so 库文件
           find build/app/intermediates/stripped_native_libs -name "*.so" -type f 2>/dev/null || true
           find build/app/outputs -name "*.so" -type f 2>/dev/null || true
-          # 从 apk 中提取 so 用于归档
-          if [ -d build/app/outputs/flutter-apk/app-release.apk ]; then
+          # 验证 APK
+          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
             echo "APK 构建成功"
             ls -lh build/app/outputs/flutter-apk/app-release.apk
           fi
 
-      - name: 上传 Android 产物
+      - name: 上传 Android APK (独立 artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: example/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      - name: 上传 Android 构建产物 (.so 等)
         uses: actions/upload-artifact@v4
         with:
           name: android-build
           path: |
-            example/build/app/outputs/flutter-apk/app-release.apk
             example/build_artifacts/android/
           if-no-files-found: warn
 
@@ -406,7 +410,13 @@ jobs:
           mkdir -p final-artifacts/macos
           mkdir -p final-artifacts/linux
 
-          # Android
+          # Android APK (独立 artifact)
+          if [ -f "all-artifacts/android-apk/app-release.apk" ]; then
+            cp all-artifacts/android-apk/app-release.apk final-artifacts/android/
+            echo "APK 已复制到 final-artifacts/android/"
+            ls -lh final-artifacts/android/app-release.apk
+          fi
+          # Android 构建产物
           if [ -d "all-artifacts/android-build" ]; then
             cp -r all-artifacts/android-build/* final-artifacts/android/ 2>/dev/null || true
           fi
