@@ -578,7 +578,7 @@ typedef _SetGlobalGradientDart =
 /// 此类为单例模式，全局共享一个动态库实例。
 class BarrageFfiBind {
   /// 动态库名称（各平台不同）
-  static const String _libName = 'rs_barrage_core';
+  static const String _libName = 'flutter_rs_ffi_barrage';
 
   /// 单例实例
   static BarrageFfiBind? _instance;
