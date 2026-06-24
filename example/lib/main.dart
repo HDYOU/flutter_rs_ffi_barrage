@@ -113,64 +113,68 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
 
   TextEffectConfig _buildCurrentEffectConfig() {
     return TextEffectConfig(
-      stroke: _strokeEnabled
-          ? const StrokeConfig(
-            enabled: true,
-            width: 2.5,
-            color: 0xFF000000,
-            isOuter: true,
-          )
-          : const StrokeConfig(
-            enabled: false,
-            width: 0,
-            color: 0,
-            isOuter: false,
-          ),
-      shadow: _shadowEnabled
-          ? const ShadowConfig(
-            enabled: true,
-            offsetX: 3.0,
-            offsetY: 3.0,
-            blur: 0.0,
-            color: 0x80000000,
-            layers: 3,
-          )
-          : const ShadowConfig(
-            enabled: false,
-            offsetX: 0,
-            offsetY: 0,
-            blur: 0,
-            color: 0,
-            layers: 0,
-          ),
-      neon: _neonEnabled
-          ? const NeonConfig(
-            enabled: true,
-            radius: 10.0,
-            color: 0xFFFF00FF,
-            intensity: 0.8,
-            layers: 4,
-          )
-          : const NeonConfig(
-            enabled: false,
-            radius: 0,
-            color: 0,
-            intensity: 0,
-            layers: 0,
-          ),
-      gradient: _gradientEnabled
-          ? GradientConfig(
-            enabled: true,
-            gradType: GradientType.rainbow,
-            colors: Uint32List(0),
-            angle: 0.0,
-          )
-          : GradientConfig(
-            enabled: false,
-            gradType: GradientType.rainbow,
-            colors: Uint32List(0),
-            angle: 0,
-          ),
+      stroke:
+          _strokeEnabled
+              ? const StrokeConfig(
+                enabled: true,
+                width: 2.5,
+                color: 0xFF000000,
+                isOuter: true,
+              )
+              : const StrokeConfig(
+                enabled: false,
+                width: 0,
+                color: 0,
+                isOuter: false,
+              ),
+      shadow:
+          _shadowEnabled
+              ? const ShadowConfig(
+                enabled: true,
+                offsetX: 3.0,
+                offsetY: 3.0,
+                blur: 0.0,
+                color: 0x80000000,
+                layers: 3,
+              )
+              : const ShadowConfig(
+                enabled: false,
+                offsetX: 0,
+                offsetY: 0,
+                blur: 0,
+                color: 0,
+                layers: 0,
+              ),
+      neon:
+          _neonEnabled
+              ? const NeonConfig(
+                enabled: true,
+                radius: 10.0,
+                color: 0xFFFF00FF,
+                intensity: 0.8,
+                layers: 4,
+              )
+              : const NeonConfig(
+                enabled: false,
+                radius: 0,
+                color: 0,
+                intensity: 0,
+                layers: 0,
+              ),
+      gradient:
+          _gradientEnabled
+              ? GradientConfig(
+                enabled: true,
+                gradType: GradientType.rainbow,
+                colors: Uint32List(0),
+                angle: 0.0,
+              )
+              : GradientConfig(
+                enabled: false,
+                gradType: GradientType.rainbow,
+                colors: Uint32List(0),
+                angle: 0,
+              ),
     );
   }
 
@@ -276,30 +280,31 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       color: Colors.grey.shade200,
       child: Row(
-        children: types.map((t) {
-          final isSelected = _selectedTrackType == t.$1;
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: ElevatedButton(
-                onPressed: () => setState(() => _selectedTrackType = t.$1),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isSelected ? Colors.deepPurple : Colors.white,
-                  foregroundColor:
-                      isSelected ? Colors.white : Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  minimumSize: Size.zero,
-                  textStyle: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+        children:
+            types.map((t) {
+              final isSelected = _selectedTrackType == t.$1;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _selectedTrackType = t.$1),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          isSelected ? Colors.deepPurple : Colors.white,
+                      foregroundColor:
+                          isSelected ? Colors.white : Colors.black87,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      minimumSize: Size.zero,
+                      textStyle: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    child: Text(t.$2),
                   ),
                 ),
-                child: Text(t.$2),
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }
