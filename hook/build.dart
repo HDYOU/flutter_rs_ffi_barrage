@@ -94,8 +94,9 @@ void main(List<String> args) async {
     // 增量编译检查：基于源码文件修改时间
     final sourceHash = await _computeSourceHash(rsCoreDir);
     final hashFile = File.fromUri(outDir.resolve('.build_hash_$rustTarget'));
-    final lastHash =
-        await hashFile.exists() ? await hashFile.readAsString() : '';
+    final lastHash = await hashFile.exists()
+        ? await hashFile.readAsString()
+        : '';
 
     if (lastHash == sourceHash && await libPath.exists()) {
       _info('📦 源码未变更，跳过编译，使用缓存产物');
