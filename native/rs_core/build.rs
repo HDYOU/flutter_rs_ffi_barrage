@@ -12,7 +12,10 @@ use std::env;
 
 fn main() {
     // Inject package version from Cargo.toml as a compile-time env var
-    println!("cargo:rustc-env=CARGO_PKG_VERSION={}", env!("CARGO_PKG_VERSION"));
+    println!(
+        "cargo:rustc-env=CARGO_PKG_VERSION={}",
+        env!("CARGO_PKG_VERSION")
+    );
 
     // Detect target OS for conditional compilation
     // Note: We use custom cfg names (not target_os/target_arch) because those
@@ -48,6 +51,9 @@ fn main() {
     }
 
     // Print build info for debugging
-    println!("cargo:warning=Building flutter_rs_ffi_barrage for {} / {}", target_os, target_arch);
+    println!(
+        "cargo:warning=Building flutter_rs_ffi_barrage for {} / {}",
+        target_os, target_arch
+    );
     println!("cargo:warning=No C headers generated - using pure Rust extern \"C\" + Dart:ffi direct binding");
 }

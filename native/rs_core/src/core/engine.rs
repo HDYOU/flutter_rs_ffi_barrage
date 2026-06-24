@@ -7,9 +7,9 @@
 //! - 管理表情系统和文字特效
 //! - 弹幕过滤和调度
 
-use crate::track::track_manager::{TrackManager, TrackType, BarrageItem};
 use crate::emoji::emoji_manager::EmojiManager;
 use crate::text_effect::effects::TextEffects;
+use crate::track::track_manager::{BarrageItem, TrackManager, TrackType};
 use crossbeam::queue::ArrayQueue;
 use std::sync::Arc;
 
@@ -136,7 +136,7 @@ impl BarrageEngine {
     pub fn new(width: u32, height: u32) -> Self {
         let track_manager = TrackManager::new(width as f32, height as f32);
         let emoji_manager = EmojiManager::new(200);
-        
+
         Self {
             width,
             height,
@@ -214,13 +214,9 @@ impl BarrageEngine {
         }
 
         // 推送到轨道管理器
-        let result = self.track_manager.push(
-            text.to_string(),
-            color,
-            font_size,
-            timestamp_ms,
-            track_type,
-        );
+        let result =
+            self.track_manager
+                .push(text.to_string(), color, font_size, timestamp_ms, track_type);
 
         if result {
             self.next_id += 1;
@@ -323,7 +319,14 @@ impl BarrageEngine {
     }
 
     /// 设置全局阴影效果
-    pub fn set_global_shadow(&mut self, enabled: bool, offset_x: f32, offset_y: f32, blur: f32, color: u32) {
+    pub fn set_global_shadow(
+        &mut self,
+        enabled: bool,
+        offset_x: f32,
+        offset_y: f32,
+        blur: f32,
+        color: u32,
+    ) {
         self.text_effects.shadow.enabled = enabled;
         self.text_effects.shadow.offset_x = offset_x;
         self.text_effects.shadow.offset_y = offset_y;
@@ -340,12 +343,21 @@ impl BarrageEngine {
     }
 
     /// 设置全局渐变效果
-    pub fn set_global_gradient(&mut self, enabled: bool, gradient_type: u32, colors: &[u32], stops: &[f32], angle: f32) {
+    pub fn set_global_gradient(
+        &mut self,
+        enabled: bool,
+        gradient_type: u32,
+        colors: &[u32],
+        stops: &[f32],
+        angle: f32,
+    ) {
         use crate::text_effect::effects::GradientType;
         self.text_effects.gradient.enabled = enabled;
         self.text_effects.gradient.gradient_type = GradientType::from_u32(gradient_type);
         self.text_effects.gradient.angle = angle;
-        self.text_effects.gradient.set_colors_from_u32(colors, stops);
+        self.text_effects
+            .gradient
+            .set_colors_from_u32(colors, stops);
     }
 
     /// 获取当前存活弹幕数
@@ -396,10 +408,10 @@ mod tests {
     fn test_pause_resume() {
         let mut engine = BarrageEngine::new(800, 600);
         assert_eq!(engine.play_state, PlayState::Playing);
-        
+
         engine.pause();
         assert_eq!(engine.play_state, PlayState::Paused);
-        
+
         engine.resume();
         assert_eq!(engine.play_state, PlayState::Playing);
     }
@@ -409,7 +421,7 @@ mod tests {
         let mut engine = BarrageEngine::new(800, 600);
         engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         assert_eq!(engine.alive_count(), 1);
-        
+
         engine.seek(10000);
         assert_eq!(engine.current_time_ms, 10000);
         assert_eq!(engine.alive_count(), 0); // seek 会清空
@@ -420,9 +432,9 @@ mod tests {
         let mut engine = BarrageEngine::new(800, 600);
         engine.push("测试1", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         engine.push("测试2", 0xFFFFFFFF, 24, 0, TrackType::Top);
-        
+
         assert_eq!(engine.alive_count(), 2);
-        
+
         engine.clear();
         assert_eq!(engine.alive_count(), 0);
     }
@@ -439,11 +451,11 @@ mod tests {
     fn test_filter_keyword() {
         let mut engine = BarrageEngine::new(800, 600);
         engine.add_filter_keyword("屏蔽词");
-        
+
         // 包含屏蔽词的弹幕应该被过滤
         let result = engine.push("这是屏蔽词测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         assert!(!result);
-        
+
         // 不包含屏蔽词的应该通过
         let result = engine.push("正常弹幕", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         assert!(result);
@@ -453,10 +465,10 @@ mod tests {
     fn test_filter_track_type() {
         let mut engine = BarrageEngine::new(800, 600);
         engine.filter.block_top = true;
-        
+
         let result = engine.push("顶部弹幕", 0xFFFFFFFF, 24, 0, TrackType::Top);
         assert!(!result);
-        
+
         let result = engine.push("滚动弹幕", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         assert!(result);
     }
@@ -464,13 +476,8 @@ mod tests {
     #[test]
     fn test_async_push() {
         let engine = BarrageEngine::new(800, 600);
-        let result = engine.push_async(
-            "异步弹幕".to_string(),
-            0xFFFFFFFF,
-            24,
-            0,
-            TrackType::Scroll,
-        );
+        let result =
+            engine.push_async("异步弹幕".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         assert!(result);
     }
 
@@ -485,7 +492,7 @@ mod tests {
     fn test_update() {
         let mut engine = BarrageEngine::new(800, 600);
         engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
-        
+
         let count = engine.update(1000);
         assert!(count > 0);
     }

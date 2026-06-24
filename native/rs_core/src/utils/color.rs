@@ -44,7 +44,12 @@ impl Color {
     /// 透明黑色
     #[inline]
     pub fn transparent() -> Self {
-        Self { r: 0, g: 0, b: 0, a: 0 }
+        Self {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0,
+        }
     }
 
     /// 预乘 Alpha
@@ -156,7 +161,8 @@ pub fn rainbow_gradient(t: f32) -> Color {
         s: 1.0,
         l: 0.5,
         a: 1.0,
-    }.to_rgba()
+    }
+    .to_rgba()
 }
 
 /// 根据位置计算线性渐变颜色
@@ -190,25 +196,25 @@ pub fn linear_gradient(colors: &[Color], stops: &[f32], t: f32) -> Color {
 pub fn gradient_sample_pos(x: f32, y: f32, width: f32, height: f32, angle_deg: f32) -> f32 {
     use std::f32::consts::PI;
     let angle_rad = angle_deg * PI / 180.0;
-    
+
     // 计算渐变方向向量
     let dx = angle_rad.sin();
     let dy = -angle_rad.cos();
-    
+
     // 计算中心
     let cx = width / 2.0;
     let cy = height / 2.0;
-    
+
     // 计算点相对于中心的偏移
     let ox = x - cx;
     let oy = y - cy;
-    
+
     // 投影到渐变方向
     let proj = ox * dx + oy * dy;
-    
+
     // 计算对角线长度的一半（用于归一化）
     let diag = (width * width + height * height).sqrt() / 2.0;
-    
+
     // 归一化到 0~1
     (proj / diag + 0.5).clamp(0.0, 1.0)
 }
@@ -243,19 +249,37 @@ mod tests {
     #[test]
     fn test_hsl_to_rgba() {
         // 红色
-        let red = HslColor { h: 0.0, s: 1.0, l: 0.5, a: 1.0 }.to_rgba();
+        let red = HslColor {
+            h: 0.0,
+            s: 1.0,
+            l: 0.5,
+            a: 1.0,
+        }
+        .to_rgba();
         assert_eq!(red.r, 255);
         assert_eq!(red.g, 0);
         assert_eq!(red.b, 0);
 
         // 绿色
-        let green = HslColor { h: 120.0, s: 1.0, l: 0.5, a: 1.0 }.to_rgba();
+        let green = HslColor {
+            h: 120.0,
+            s: 1.0,
+            l: 0.5,
+            a: 1.0,
+        }
+        .to_rgba();
         assert_eq!(green.r, 0);
         assert_eq!(green.g, 255);
         assert_eq!(green.b, 0);
 
         // 蓝色
-        let blue = HslColor { h: 240.0, s: 1.0, l: 0.5, a: 1.0 }.to_rgba();
+        let blue = HslColor {
+            h: 240.0,
+            s: 1.0,
+            l: 0.5,
+            a: 1.0,
+        }
+        .to_rgba();
         assert_eq!(blue.r, 0);
         assert_eq!(blue.g, 0);
         assert_eq!(blue.b, 255);

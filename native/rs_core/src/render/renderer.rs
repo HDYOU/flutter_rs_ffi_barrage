@@ -11,9 +11,9 @@
 //! 实际项目中可集成 ab_glyph/rusttype 进行高质量字体渲染。
 
 use crate::core::engine::BarrageEngine;
-use crate::track::track_manager::BarrageItem;
 use crate::emoji::emoji_manager::{EmojiManager, TextSegment};
 use crate::text_effect::effects::TextEffects;
+use crate::track::track_manager::BarrageItem;
 use crate::utils::color::Color;
 
 /// 帧缓冲包装
@@ -78,23 +78,24 @@ impl FrameBuffer {
         let idx = y as usize * self.width as usize + x as usize;
         let dst = self.pixels[idx];
         let dst_color = Color::from_u32(dst);
-        
+
         // Alpha 混合（预乘 Alpha 方式）
         let src_premul = color.premultiply();
         let dst_premul = dst_color.premultiply();
-        
+
         let inv_a = 1.0 - src_premul.a as f32 / 255.0;
         let r = (src_premul.r as f32 + dst_premul.r as f32 * inv_a) as u32;
         let g = (src_premul.g as f32 + dst_premul.g as f32 * inv_a) as u32;
         let b = (src_premul.b as f32 + dst_premul.b as f32 * inv_a) as u32;
         let a = (src_premul.a as f32 + dst_premul.a as f32 * inv_a) as u32;
-        
+
         self.pixels[idx] = Color::rgba(
             r.min(255) as u8,
             g.min(255) as u8,
             b.min(255) as u8,
             a.min(255) as u8,
-        ).to_u32();
+        )
+        .to_u32();
     }
 
     /// 直接设置像素（不混合，直接覆盖）
@@ -116,7 +117,7 @@ impl FrameBuffer {
         let y0 = y.max(0);
         let x1 = (x + w).min(self.width as i32);
         let y1 = (y + h).min(self.height as i32);
-        
+
         if x0 >= x1 || y0 >= y1 {
             return;
         }
@@ -133,12 +134,12 @@ impl FrameBuffer {
         if pixels.len() < (w * h * 4) as usize {
             return;
         }
-        
+
         let x0 = x.max(0);
         let y0 = y.max(0);
         let x1 = (x + w).min(self.width as i32);
         let y1 = (y + h).min(self.height as i32);
-        
+
         if x0 >= x1 || y0 >= y1 {
             return;
         }
@@ -148,12 +149,12 @@ impl FrameBuffer {
                 let src_x = px - x;
                 let src_y = py - y;
                 let src_idx = (src_y as usize * w as usize + src_x as usize) * 4;
-                
+
                 let r = pixels[src_idx];
                 let g = pixels[src_idx + 1];
                 let b = pixels[src_idx + 2];
                 let a = pixels[src_idx + 3];
-                
+
                 if a > 0 {
                     self.set_pixel(px, py, Color::rgba(r, g, b, a));
                 }
@@ -183,7 +184,7 @@ impl FrameBuffer {
         let y0 = dst_y.max(0);
         let x1 = (dst_x + dst_w).min(self.width as i32);
         let y1 = (dst_y + dst_h).min(self.height as i32);
-        
+
         if x0 >= x1 || y0 >= y1 {
             return;
         }
@@ -192,17 +193,17 @@ impl FrameBuffer {
             for px in x0..x1 {
                 let local_x = px - dst_x;
                 let local_y = py - dst_y;
-                
+
                 let src_x = (local_x * src_w / dst_w).max(0).min(src_w - 1);
                 let src_y = (local_y * src_h / dst_h).max(0).min(src_h - 1);
-                
+
                 let src_idx = (src_y as usize * src_w as usize + src_x as usize) * 4;
-                
+
                 let r = pixels[src_idx];
                 let g = pixels[src_idx + 1];
                 let b = pixels[src_idx + 2];
                 let a = pixels[src_idx + 3];
-                
+
                 if a > 0 {
                     self.set_pixel(px, py, Color::rgba(r, g, b, a));
                 }
@@ -294,7 +295,7 @@ impl BarrageRenderer {
         let x = item.x as i32;
         let y = item.y as i32;
         let base_color = Color::from_u32(item.color);
-        
+
         // 应用弹幕整体不透明度
         let base_color = if item.opacity < 1.0 {
             Color::rgba(
@@ -356,7 +357,7 @@ impl BarrageRenderer {
             match segment {
                 TextSegment::Text(text) => {
                     let text_width = text.chars().count() as f32 * font_size * 0.6;
-                    
+
                     // 描边（如果启用）
                     if effects.stroke.enabled {
                         self.render_text_stroke(
@@ -393,7 +394,11 @@ impl BarrageRenderer {
 
                     cursor_x += text_width;
                 }
-                TextSegment::Emoji { text, width, height } => {
+                TextSegment::Emoji {
+                    text,
+                    width,
+                    height,
+                } => {
                     // 渲染 Emoji
                     let emoji_height = font_size * emoji_manager.emoji_scale();
                     let scale = emoji_height / *height as f32;
@@ -440,14 +445,14 @@ impl BarrageRenderer {
     ) {
         let radius = neon.radius;
         let base_color = neon.color;
-        
+
         // 多层发光，从外到内透明度递增
         let layers = 4;
         for i in 0..layers {
             let t = i as f32 / layers as f32;
             let expand = radius * (1.0 - t * 0.5);
             let alpha = (neon.intensity * (1.0 - t) * 0.3 * global_opacity).min(1.0);
-            
+
             if alpha <= 0.0 {
                 continue;
             }
@@ -464,7 +469,8 @@ impl BarrageRenderer {
             let glow_w = width as i32 + expand as i32 * 2;
             let glow_h = height as i32 + expand as i32 * 2;
 
-            self.frame_buffer.fill_rect(glow_x, glow_y, glow_w, glow_h, glow_color);
+            self.frame_buffer
+                .fill_rect(glow_x, glow_y, glow_w, glow_h, glow_color);
         }
     }
 
@@ -480,7 +486,7 @@ impl BarrageRenderer {
     ) {
         let shadow_x = x + shadow.offset_x as i32;
         let shadow_y = y + shadow.offset_y as i32;
-        
+
         let alpha = shadow.color.a as f32 / 255.0 * global_opacity;
         if alpha <= 0.0 {
             return;
@@ -498,7 +504,7 @@ impl BarrageRenderer {
         for i in 0..blur_layers {
             let expand = shadow.blur * (i as f32 / blur_layers as f32);
             let layer_alpha = alpha * (1.0 - i as f32 / blur_layers as f32) / blur_layers as f32;
-            
+
             if layer_alpha <= 0.0 {
                 continue;
             }
@@ -549,13 +555,18 @@ impl BarrageRenderer {
 
         // 简化描边：在 8 个方向偏移绘制文字
         let directions = [
-            (-1, -1), (0, -1), (1, -1),
-            (-1, 0),           (1, 0),
-            (-1, 1),  (0, 1),  (1, 1),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
         ];
 
         let offset = stroke_width.max(1.0) as i32;
-        
+
         for &(dx, dy) in &directions {
             self.render_text_body(
                 x + dx * offset,
@@ -569,14 +580,7 @@ impl BarrageRenderer {
 
     /// 渲染文字主体（简化版：用矩形代表每个字符）
     /// 实际项目中应替换为 ab_glyph 或 rusttype 的字体光栅化
-    fn render_text_body(
-        &mut self,
-        x: i32,
-        y: i32,
-        text: &str,
-        font_size: f32,
-        color: Color,
-    ) {
+    fn render_text_body(&mut self, x: i32, y: i32, text: &str, font_size: f32, color: Color) {
         if color.a == 0 {
             return;
         }
@@ -596,13 +600,8 @@ impl BarrageRenderer {
             if char_width > 0 && char_height > 0 {
                 // 绘制字符矩形（简化版）
                 // 实际项目中应使用字体光栅化结果
-                self.frame_buffer.fill_rect(
-                    x + cursor,
-                    y,
-                    char_width,
-                    char_height,
-                    color,
-                );
+                self.frame_buffer
+                    .fill_rect(x + cursor, y, char_width, char_height, color);
             }
 
             cursor += char_width + 1; // 1px 字间距
@@ -667,12 +666,12 @@ mod tests {
     fn test_fill_rect() {
         let mut fb = FrameBuffer::new(100, 100);
         fb.fill_rect(10, 10, 20, 20, Color::rgba(0, 255, 0, 255));
-        
+
         // 矩形内应该是绿色
         let pixel = fb.get_pixel(20, 20);
         let color = Color::from_u32(pixel);
         assert_eq!(color.g, 255);
-        
+
         // 矩形外应该是透明
         let pixel = fb.get_pixel(5, 5);
         assert_eq!(pixel, 0);
@@ -698,7 +697,7 @@ mod tests {
         let mut renderer = BarrageRenderer::new(100, 100);
         let engine = BarrageEngine::new(100, 100);
         let mut buffer = vec![0u32; 10000];
-        
+
         let count = renderer.render_frame(&engine, 0, &mut buffer, 10000);
         assert_eq!(count, 0);
     }
@@ -707,13 +706,13 @@ mod tests {
     fn test_render_frame_with_barrage() {
         let mut renderer = BarrageRenderer::new(200, 200);
         let mut engine = BarrageEngine::new(200, 200);
-        
+
         engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         engine.update(0);
-        
+
         let mut buffer = vec![0u32; 200 * 200];
         let count = renderer.render_frame(&engine, 0, &mut buffer, (200 * 200) as u64);
-        
+
         assert!(count > 0);
         // 缓冲区中应该有一些非零像素
         let has_pixels = buffer.iter().any(|&p| p != 0);

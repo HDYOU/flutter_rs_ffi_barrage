@@ -176,7 +176,7 @@ impl Track {
                 // 计算最后一条弹幕的尾部当前位置
                 let time_delta = (current_time_ms - last.timestamp_ms) as f32 / 1000.0;
                 let last_tail_x = canvas_width - last.speed * time_delta + last.width;
-                
+
                 // 如果最后一条弹幕的尾部还没进入屏幕（还在右边外面），则不能添加
                 if last_tail_x > canvas_width {
                     return false;
@@ -211,7 +211,7 @@ impl Track {
 
                 let time_delta = (current_time_ms - last.timestamp_ms) as f32 / 1000.0;
                 let last_head_x = last.speed * time_delta - last.width;
-                
+
                 if last_head_x < 0.0 {
                     return false;
                 }
@@ -363,12 +363,12 @@ impl TrackManager {
         let track_height = 36.0; // 默认行高
         let track_gap = 4.0;
         let total_per_track = track_height + track_gap;
-        
+
         // 计算各种轨道的数量
         let scroll_track_count = ((canvas_height * 0.7) / total_per_track).max(1.0) as usize;
         let top_track_count = ((canvas_height * 0.15) / total_per_track).max(1.0) as usize;
         let bottom_track_count = ((canvas_height * 0.15) / total_per_track).max(1.0) as usize;
-        
+
         let mut manager = Self {
             canvas_width,
             canvas_height,
@@ -401,7 +401,8 @@ impl TrackManager {
         // 顶部固定轨道（从顶部开始）
         let mut current_y = self.track_gap;
         for i in 0..top_count {
-            self.top_tracks.push(Track::new(i, current_y, self.track_height, TrackType::Top));
+            self.top_tracks
+                .push(Track::new(i, current_y, self.track_height, TrackType::Top));
             current_y += total_per_track;
         }
 
@@ -423,7 +424,8 @@ impl TrackManager {
         }
 
         // 底部固定轨道（从底部向上）
-        let bottom_start_y = self.canvas_height - self.track_gap - bottom_count as f32 * total_per_track;
+        let bottom_start_y =
+            self.canvas_height - self.track_gap - bottom_count as f32 * total_per_track;
         for i in 0..bottom_count {
             self.bottom_tracks.push(Track::new(
                 i,
@@ -480,7 +482,14 @@ impl TrackManager {
     }
 
     /// 推送一条弹幕，返回是否成功
-    pub fn push(&mut self, text: String, color: u32, font_size: u32, timestamp_ms: u64, track_type: TrackType) -> bool {
+    pub fn push(
+        &mut self,
+        text: String,
+        color: u32,
+        font_size: u32,
+        timestamp_ms: u64,
+        track_type: TrackType,
+    ) -> bool {
         let id = self.next_id;
         self.next_id += 1;
 
@@ -633,7 +642,7 @@ impl TrackManager {
     /// 获取所有存活的弹幕（用于渲染）
     pub fn get_all_alive(&self) -> Vec<&BarrageItem> {
         let mut result = Vec::new();
-        
+
         for track in &self.scroll_tracks {
             result.extend(track.items.iter().filter(|i| i.alive));
         }
@@ -646,14 +655,14 @@ impl TrackManager {
         for track in &self.reverse_tracks {
             result.extend(track.items.iter().filter(|i| i.alive));
         }
-        
+
         result
     }
 
     /// 获取所有存活弹幕的可变引用
     pub fn get_all_alive_mut(&mut self) -> Vec<&mut BarrageItem> {
         let mut result = Vec::new();
-        
+
         for track in &mut self.scroll_tracks {
             result.extend(track.items.iter_mut().filter(|i| i.alive));
         }
@@ -666,7 +675,7 @@ impl TrackManager {
         for track in &mut self.reverse_tracks {
             result.extend(track.items.iter_mut().filter(|i| i.alive));
         }
-        
+
         result
     }
 
@@ -744,13 +753,7 @@ mod tests {
     #[test]
     fn test_push_barrage() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        let result = manager.push(
-            "测试弹幕".to_string(),
-            0xFFFFFFFF,
-            24,
-            0,
-            TrackType::Scroll,
-        );
+        let result = manager.push("测试弹幕".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         assert!(result);
         assert_eq!(manager.alive_count(), 1);
     }
@@ -759,12 +762,12 @@ mod tests {
     fn test_update_barrage() {
         let mut manager = TrackManager::new(800.0, 600.0);
         manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
-        
+
         let items = manager.get_all_alive();
         let initial_x = items[0].x;
-        
+
         manager.update(1000); // 1秒后
-        
+
         let items = manager.get_all_alive();
         assert!(items[0].x < initial_x); // 向左移动了
     }
@@ -774,9 +777,9 @@ mod tests {
         let mut manager = TrackManager::new(800.0, 600.0);
         manager.push("测试1".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
         manager.push("测试2".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Top);
-        
+
         assert_eq!(manager.alive_count(), 2);
-        
+
         manager.clear();
         assert_eq!(manager.alive_count(), 0);
     }
@@ -785,11 +788,11 @@ mod tests {
     fn test_resize() {
         let mut manager = TrackManager::new(800.0, 600.0);
         manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll);
-        
+
         let count_before = manager.scroll_track_count();
         manager.resize(1920.0, 1080.0);
         let count_after = manager.scroll_track_count();
-        
+
         assert!(count_after >= count_before);
     }
 }

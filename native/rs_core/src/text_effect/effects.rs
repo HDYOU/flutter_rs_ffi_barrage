@@ -6,7 +6,9 @@
 //! - NeonEffect: 霓虹发光
 //! - GradientEffect: 线性/径向/彩虹渐变
 
-use crate::utils::color::{Color, linear_gradient, gradient_sample_pos, radial_gradient_sample, rainbow_gradient};
+use crate::utils::color::{
+    gradient_sample_pos, linear_gradient, radial_gradient_sample, rainbow_gradient, Color,
+};
 
 /// 渐变类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -115,8 +117,8 @@ impl ShadowEffect {
         }
         let blur_expand = self.blur * 2.0;
         (
-            self.offset_x.max(0.0) + blur_expand, // right
-            self.offset_y.max(0.0) + blur_expand, // bottom
+            self.offset_x.max(0.0) + blur_expand,    // right
+            self.offset_y.max(0.0) + blur_expand,    // bottom
             (-self.offset_x).max(0.0) + blur_expand, // left
             (-self.offset_y).max(0.0) + blur_expand, // top
         )
@@ -238,7 +240,14 @@ impl GradientEffect {
     }
 
     /// 获取指定位置的渐变颜色
-    pub fn sample_color(&self, x: f32, y: f32, width: f32, height: f32, base_color: Color) -> Color {
+    pub fn sample_color(
+        &self,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        base_color: Color,
+    ) -> Color {
         if !self.enabled {
             return base_color;
         }

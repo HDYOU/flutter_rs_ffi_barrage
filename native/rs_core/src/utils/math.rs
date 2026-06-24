@@ -35,8 +35,14 @@ pub fn clamp_u32(value: u32, min: u32, max: u32) -> u32 {
 /// 检查矩形是否相交（AABB 碰撞检测）
 #[inline]
 pub fn rect_intersects(
-    x1: f32, y1: f32, w1: f32, h1: f32,
-    x2: f32, y2: f32, w2: f32, h2: f32,
+    x1: f32,
+    y1: f32,
+    w1: f32,
+    h1: f32,
+    x2: f32,
+    y2: f32,
+    w2: f32,
+    h2: f32,
 ) -> bool {
     x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 }
@@ -110,8 +116,16 @@ pub fn pack_rgba_to_u32(r: u8, g: u8, b: u8, a: u8) -> u32 {
 
 /// 预乘 Alpha 的颜色混合（源 over 目标）
 #[inline]
-pub fn blend_premultiplied(src_r: u8, src_g: u8, src_b: u8, src_a: u8,
-                          dst_r: u8, dst_g: u8, dst_b: u8, dst_a: u8) -> (u8, u8, u8, u8) {
+pub fn blend_premultiplied(
+    src_r: u8,
+    src_g: u8,
+    src_b: u8,
+    src_a: u8,
+    dst_r: u8,
+    dst_g: u8,
+    dst_b: u8,
+    dst_a: u8,
+) -> (u8, u8, u8, u8) {
     let inv_a = 255 - src_a as u32;
     let out_r = src_r as u32 + (dst_r as u32 * inv_a + 127) / 255;
     let out_g = src_g as u32 + (dst_g as u32 * inv_a + 127) / 255;
@@ -127,16 +141,24 @@ pub fn blend_premultiplied(src_r: u8, src_g: u8, src_b: u8, src_a: u8,
 
 /// 非预乘 Alpha 的颜色混合
 #[inline]
-pub fn blend_unmultiplied(src_r: u8, src_g: u8, src_b: u8, src_a: u8,
-                        dst_r: u8, dst_g: u8, dst_b: u8, dst_a: u8) -> (u8, u8, u8, u8) {
+pub fn blend_unmultiplied(
+    src_r: u8,
+    src_g: u8,
+    src_b: u8,
+    src_a: u8,
+    dst_r: u8,
+    dst_g: u8,
+    dst_b: u8,
+    dst_a: u8,
+) -> (u8, u8, u8, u8) {
     let src_a_f = src_a as f32 / 255.0;
     let inv_a = 1.0 - src_a_f;
-    
+
     let out_r = (src_r as f32 * src_a_f + dst_r as f32 * inv_a) as u32;
     let out_g = (src_g as f32 * src_a_f + dst_g as f32 * inv_a) as u32;
     let out_b = (src_b as f32 * src_a_f + dst_b as f32 * inv_a) as u32;
     let out_a = (src_a_f + dst_a as f32 / 255.0 * inv_a) * 255.0;
-    
+
     (
         out_r.min(255) as u8,
         out_g.min(255) as u8,
@@ -166,7 +188,9 @@ mod tests {
     #[test]
     fn test_rect_intersects() {
         assert!(rect_intersects(0.0, 0.0, 10.0, 10.0, 5.0, 5.0, 10.0, 10.0));
-        assert!(!rect_intersects(0.0, 0.0, 10.0, 10.0, 15.0, 15.0, 10.0, 10.0));
+        assert!(!rect_intersects(
+            0.0, 0.0, 10.0, 10.0, 15.0, 15.0, 10.0, 10.0
+        ));
     }
 
     #[test]

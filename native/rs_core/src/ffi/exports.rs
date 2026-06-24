@@ -17,9 +17,9 @@
 //! - bool, f32
 
 use crate::core::engine::BarrageEngine;
+use crate::ffi::callbacks::{self, EmojiBitmapRawCallback};
 use crate::render::renderer::BarrageRenderer;
 use crate::track::track_manager::TrackType;
-use crate::ffi::callbacks::{self, EmojiBitmapRawCallback};
 
 /// 最大字符串长度限制（1MB）
 const MAX_STRING_LEN: u64 = 1024 * 1024;
@@ -102,7 +102,7 @@ pub unsafe extern "C" fn barrage_engine_create(width: u32, height: u32) -> *mut 
     // 创建引擎和渲染器
     let engine = BarrageEngine::new(width, height);
     let renderer = BarrageRenderer::new(width, height);
-    
+
     let wrapper = Box::new(EngineWrapper { engine, renderer });
     Box::into_raw(wrapper) as *mut u8
 }
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn barrage_engine_destroy(engine_ptr: *mut u8) {
     if engine_ptr.is_null() {
         return;
     }
-    
+
     // 从原始指针重建 Box，自动 drop
     let wrapper = Box::from_raw(engine_ptr as *mut EngineWrapper);
     drop(wrapper);
@@ -275,7 +275,9 @@ pub unsafe extern "C" fn barrage_engine_push(
     // 轨道类型转换
     let tt = TrackType::from_u32(track_type);
 
-    wrapper.engine.push(&text, color, font_size, timestamp_ms, tt)
+    wrapper
+        .engine
+        .push(&text, color, font_size, timestamp_ms, tt)
 }
 
 // ============================================================================
@@ -326,12 +328,9 @@ pub unsafe extern "C" fn barrage_engine_render_frame(
     let buffer_slice = std::slice::from_raw_parts_mut(out_buffer, buffer_len as usize);
 
     // 渲染
-    wrapper.renderer.render_frame(
-        &wrapper.engine,
-        time_ms,
-        buffer_slice,
-        buffer_len,
-    )
+    wrapper
+        .renderer
+        .render_frame(&wrapper.engine, time_ms, buffer_slice, buffer_len)
 }
 
 // ============================================================================
@@ -411,12 +410,10 @@ pub unsafe extern "C" fn register_emoji_from_flutter(
 
     let pixels = std::slice::from_raw_parts(pixels_ptr, pixels_len as usize);
 
-    wrapper.engine.emoji_manager.register_from_flutter(
-        &emoji_text,
-        width,
-        height,
-        pixels,
-    )
+    wrapper
+        .engine
+        .emoji_manager
+        .register_from_flutter(&emoji_text, width, height, pixels)
 }
 
 /// 从本地文件路径注册表情
@@ -464,7 +461,10 @@ pub unsafe extern "C" fn register_emoji_from_local_path(
         return false;
     }
 
-    wrapper.engine.emoji_manager.register_from_local_path(&emoji_text, &path)
+    wrapper
+        .engine
+        .emoji_manager
+        .register_from_local_path(&emoji_text, &path)
 }
 
 /// 从远程 URL 注册表情
@@ -517,7 +517,10 @@ pub unsafe extern "C" fn register_emoji_from_url(
 
     // 简化实现：直接返回 false，建议 Flutter 端下载后通过 register_emoji_from_flutter 注册
     // 实际项目中可集成 reqwest 进行异步下载
-    wrapper.engine.emoji_manager.register_from_url(&emoji_text, &url)
+    wrapper
+        .engine
+        .emoji_manager
+        .register_from_url(&emoji_text, &url)
 }
 
 // ============================================================================
@@ -585,7 +588,9 @@ pub unsafe extern "C" fn set_global_shadow(
         return;
     }
 
-    wrapper.engine.set_global_shadow(enabled, offset_x, offset_y, blur, color);
+    wrapper
+        .engine
+        .set_global_shadow(enabled, offset_x, offset_y, blur, color);
 }
 
 /// 设置全局霓虹发光效果
@@ -617,7 +622,9 @@ pub unsafe extern "C" fn set_global_neon(
         return;
     }
 
-    wrapper.engine.set_global_neon(enabled, radius, color, intensity);
+    wrapper
+        .engine
+        .set_global_neon(enabled, radius, color, intensity);
 }
 
 /// 设置全局渐变效果
@@ -663,7 +670,7 @@ pub unsafe extern "C" fn set_global_gradient(
 
         let colors_slice = std::slice::from_raw_parts(colors_ptr, colors_len as usize);
         let colors: Vec<u32> = colors_slice.to_vec();
-        
+
         // 生成均匀分布的 stops
         let stops: Vec<f32> = if colors_len > 1 {
             (0..colors_len)
@@ -673,10 +680,14 @@ pub unsafe extern "C" fn set_global_gradient(
             vec![0.0]
         };
 
-        wrapper.engine.set_global_gradient(enabled, gradient_type, &colors, &stops, angle);
+        wrapper
+            .engine
+            .set_global_gradient(enabled, gradient_type, &colors, &stops, angle);
     } else {
         // 禁用渐变
-        wrapper.engine.set_global_gradient(false, gradient_type, &[], &[], angle);
+        wrapper
+            .engine
+            .set_global_gradient(false, gradient_type, &[], &[], angle);
     }
 }
 
@@ -719,7 +730,7 @@ mod tests {
     fn test_engine_create_and_destroy() {
         let engine = unsafe { barrage_engine_create(800, 600) };
         assert!(!engine.is_null());
-        
+
         unsafe { barrage_engine_destroy(engine) };
     }
 
@@ -728,7 +739,7 @@ mod tests {
         // 太小
         let engine = unsafe { barrage_engine_create(0, 600) };
         assert!(engine.is_null());
-        
+
         // 太大
         let engine = unsafe { barrage_engine_create(10000, 600) };
         assert!(engine.is_null());
@@ -745,7 +756,7 @@ mod tests {
             barrage_engine_resume(std::ptr::null_mut());
             barrage_engine_seek(std::ptr::null_mut(), 1000);
             barrage_engine_clear(std::ptr::null_mut());
-            
+
             let result = barrage_engine_push(
                 std::ptr::null_mut(),
                 b"test".as_ptr(),
@@ -756,13 +767,9 @@ mod tests {
                 0,
             );
             assert!(!result);
-            
-            let count = barrage_engine_render_frame(
-                std::ptr::null_mut(),
-                0,
-                std::ptr::null_mut(),
-                0,
-            );
+
+            let count =
+                barrage_engine_render_frame(std::ptr::null_mut(), 0, std::ptr::null_mut(), 0);
             assert_eq!(count, 0);
         }
     }
@@ -787,17 +794,7 @@ mod tests {
         assert!(result);
 
         // 空文本
-        let result = unsafe {
-            barrage_engine_push(
-                engine,
-                b"".as_ptr(),
-                0,
-                0,
-                0xFFFFFFFF,
-                24,
-                0,
-            )
-        };
+        let result = unsafe { barrage_engine_push(engine, b"".as_ptr(), 0, 0, 0xFFFFFFFF, 24, 0) };
         assert!(!result);
 
         unsafe { barrage_engine_destroy(engine) };
@@ -811,18 +808,21 @@ mod tests {
         // 添加弹幕
         let text = "Test";
         unsafe {
-            barrage_engine_push(engine, text.as_ptr(), text.len() as u64, 0, 0xFFFFFFFF, 24, 0);
+            barrage_engine_push(
+                engine,
+                text.as_ptr(),
+                text.len() as u64,
+                0,
+                0xFFFFFFFF,
+                24,
+                0,
+            );
         }
 
         // 渲染
         let mut buffer = vec![0u32; 200 * 200];
         let count = unsafe {
-            barrage_engine_render_frame(
-                engine,
-                100,
-                buffer.as_mut_ptr(),
-                buffer.len() as u64,
-            )
+            barrage_engine_render_frame(engine, 100, buffer.as_mut_ptr(), buffer.len() as u64)
         };
         assert!(count > 0);
 
@@ -836,12 +836,7 @@ mod tests {
 
         let mut buffer = vec![0u32; 100]; // 太小
         let count = unsafe {
-            barrage_engine_render_frame(
-                engine,
-                0,
-                buffer.as_mut_ptr(),
-                buffer.len() as u64,
-            )
+            barrage_engine_render_frame(engine, 0, buffer.as_mut_ptr(), buffer.len() as u64)
         };
         assert_eq!(count, 0);
 
@@ -870,7 +865,7 @@ mod tests {
             set_global_stroke(engine, true, 2.0, 0xFF0000FF);
             set_global_shadow(engine, true, 2.0, 2.0, 3.0, 0x00000080);
             set_global_neon(engine, true, 10.0, 0x00FFFFFF, 1.0);
-            
+
             let colors = [0xFF0000FF, 0x00FF00FF, 0x0000FFFF];
             set_global_gradient(
                 engine,
@@ -902,7 +897,15 @@ mod tests {
         // 添加一条弹幕
         let text = "Test";
         unsafe {
-            barrage_engine_push(engine, text.as_ptr(), text.len() as u64, 0, 0xFFFFFFFF, 24, 0);
+            barrage_engine_push(
+                engine,
+                text.as_ptr(),
+                text.len() as u64,
+                0,
+                0xFFFFFFFF,
+                24,
+                0,
+            );
         }
 
         let count = unsafe { barrage_engine_alive_count(engine) };
@@ -959,7 +962,7 @@ mod tests {
             barrage_engine_set_speed(engine, 1.0);
             barrage_engine_set_speed(engine, 0.5);
             barrage_engine_set_speed(engine, 2.0);
-            
+
             // 非法值（不应该 panic）
             barrage_engine_set_speed(engine, f32::NAN);
             barrage_engine_set_speed(engine, f32::INFINITY);

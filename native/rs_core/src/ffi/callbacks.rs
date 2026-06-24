@@ -121,9 +121,7 @@ pub fn call_emoji_bitmap_callback(emoji_text: &str) -> Option<(u32, u32, Vec<u8>
     // 复制像素数据到 Rust 管理的内存
     // 注意：这里假设 Dart 端分配的内存由 Dart 端管理，我们只复制数据
     // 如果约定是 Rust 端接管内存，则需要使用 Vec::from_raw_parts
-    let pixels = unsafe {
-        std::slice::from_raw_parts(out_pixels, out_pixel_len as usize).to_vec()
-    };
+    let pixels = unsafe { std::slice::from_raw_parts(out_pixels, out_pixel_len as usize).to_vec() };
 
     Some((out_width, out_height, pixels))
 }
@@ -145,7 +143,7 @@ mod tests {
         let width = 16u32;
         let height = 16u32;
         let len = (width * height * 4) as usize;
-        
+
         // 分配内存（测试中泄漏也没关系）
         let mut buf = Vec::with_capacity(len);
         for _ in 0..len / 4 {
@@ -153,7 +151,7 @@ mod tests {
         }
         let ptr = buf.as_mut_ptr();
         std::mem::forget(buf);
-        
+
         if !out_width.is_null() {
             *out_width = width;
         }
@@ -166,7 +164,7 @@ mod tests {
         if !out_pixel_len.is_null() {
             *out_pixel_len = len as u64;
         }
-        
+
         true
     }
 
@@ -183,7 +181,7 @@ mod tests {
     fn test_set_and_clear_callback() {
         set_emoji_bitmap_callback(mock_emoji_callback);
         assert!(has_emoji_bitmap_callback());
-        
+
         clear_emoji_bitmap_callback();
         // 注意：其他测试可能又设置了，所以这里不一定是 false
         // 全局状态测试有风险，仅验证函数不会 panic
@@ -193,7 +191,7 @@ mod tests {
     fn test_call_without_callback_returns_none() {
         // 确保清除回调
         clear_emoji_bitmap_callback();
-        
+
         // 没有回调时应返回 None
         let result = call_emoji_bitmap_callback("[test]");
         // 由于其他测试可能设置了回调，这里只验证函数不会 panic

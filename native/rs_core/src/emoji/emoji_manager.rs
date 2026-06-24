@@ -7,9 +7,9 @@
 //! - 文本解析：解析 [xxx] 格式的表情标签
 
 use lru::LruCache;
+use parking_lot::RwLock;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
 /// 表情位图数据
 #[derive(Debug, Clone)]
@@ -92,7 +92,8 @@ pub struct EmojiManager {
 impl EmojiManager {
     /// 创建新的表情管理器
     pub fn new(max_cache_size: usize) -> Self {
-        let cache_size = NonZeroUsize::new(max_cache_size.max(1)).unwrap_or(NonZeroUsize::new(100).unwrap());
+        let cache_size =
+            NonZeroUsize::new(max_cache_size.max(1)).unwrap_or(NonZeroUsize::new(100).unwrap());
         Self {
             cache: RwLock::new(LruCache::new(cache_size)),
             loading: RwLock::new(std::collections::HashSet::new()),
@@ -149,10 +150,10 @@ impl EmojiManager {
 
         let mut cache = self.cache.write();
         cache.put(emoji_text.to_string(), Arc::new(bitmap));
-        
+
         // 从加载中移除
         self.loading.write().remove(emoji_text);
-        
+
         true
     }
 
@@ -160,27 +161,25 @@ impl EmojiManager {
     pub fn register_from_local_path(&self, emoji_text: &str, path: &str) -> bool {
         // 尝试读取并解码图片
         match std::fs::read(path) {
-            Ok(data) => {
-                match self.decode_image(&data) {
-                    Some((width, height, pixels)) => {
-                        let bitmap = EmojiBitmap {
-                            text: emoji_text.to_string(),
-                            width,
-                            height,
-                            pixels,
-                            source: EmojiSource::LocalPath,
-                        };
-                        let mut cache = self.cache.write();
-                        cache.put(emoji_text.to_string(), Arc::new(bitmap));
-                        self.loading.write().remove(emoji_text);
-                        true
-                    }
-                    None => {
-                        self.loading.write().remove(emoji_text);
-                        false
-                    }
+            Ok(data) => match self.decode_image(&data) {
+                Some((width, height, pixels)) => {
+                    let bitmap = EmojiBitmap {
+                        text: emoji_text.to_string(),
+                        width,
+                        height,
+                        pixels,
+                        source: EmojiSource::LocalPath,
+                    };
+                    let mut cache = self.cache.write();
+                    cache.put(emoji_text.to_string(), Arc::new(bitmap));
+                    self.loading.write().remove(emoji_text);
+                    true
                 }
-            }
+                None => {
+                    self.loading.write().remove(emoji_text);
+                    false
+                }
+            },
             Err(_) => {
                 self.loading.write().remove(emoji_text);
                 false
@@ -218,11 +217,11 @@ impl EmojiManager {
         if self.cache.read().contains(text) {
             return EmojiLoadState::Loaded;
         }
-        
+
         if self.loading.read().contains(text) {
             return EmojiLoadState::Loading;
         }
-        
+
         EmojiLoadState::NotLoaded
     }
 
@@ -243,17 +242,17 @@ impl EmojiManager {
         let mut missing_emojis = Vec::new();
         let mut total_width = 0.0f32;
         let mut current_text = String::new();
-        
+
         let emoji_height = font_size as f32 * self.emoji_scale;
-        
+
         let mut chars = text.chars().peekable();
-        
+
         while let Some(c) = chars.next() {
             if c == '[' {
                 // 尝试读取表情标签
                 let mut emoji_text = String::new();
                 let mut found_closing = false;
-                
+
                 while let Some(&ec) = chars.peek() {
                     if ec == ']' {
                         chars.next(); // 消耗 ']'
@@ -267,20 +266,21 @@ impl EmojiManager {
                     emoji_text.push(ec);
                     chars.next();
                 }
-                
+
                 if found_closing && !emoji_text.is_empty() {
                     let emoji_tag = format!("[{}]", emoji_text);
-                    
+
                     // 先输出之前累积的文本
                     if !current_text.is_empty() {
-                        let text_width = current_text.chars().count() as f32 * font_size as f32 * 0.6;
+                        let text_width =
+                            current_text.chars().count() as f32 * font_size as f32 * 0.6;
                         total_width += text_width;
                         segments.push(TextSegment::Text(std::mem::take(&mut current_text)));
                     }
-                    
+
                     // 检查表情是否存在
                     let emoji_state = self.request_emoji(&emoji_tag);
-                    
+
                     match emoji_state {
                         EmojiLoadState::Loaded => {
                             if let Some(bitmap) = self.get_emoji(&emoji_tag) {
@@ -305,7 +305,9 @@ impl EmojiManager {
                                 });
                             }
                         }
-                        EmojiLoadState::Loading | EmojiLoadState::NotLoaded | EmojiLoadState::Failed => {
+                        EmojiLoadState::Loading
+                        | EmojiLoadState::NotLoaded
+                        | EmojiLoadState::Failed => {
                             missing_emojis.push(emoji_tag.clone());
                             let emoji_width = emoji_height; // 近似正方形
                             total_width += emoji_width;
@@ -328,14 +330,14 @@ impl EmojiManager {
                 current_text.push(c);
             }
         }
-        
+
         // 输出剩余文本
         if !current_text.is_empty() {
             let text_width = current_text.chars().count() as f32 * font_size as f32 * 0.6;
             total_width += text_width;
             segments.push(TextSegment::Text(current_text));
         }
-        
+
         ParsedEmojiText {
             segments,
             total_width,
@@ -381,7 +383,7 @@ mod tests {
     fn test_register_from_flutter() {
         let manager = EmojiManager::new(100);
         let pixels = vec![255u8; 16 * 16 * 4]; // 16x16 RGBA
-        
+
         assert!(manager.register_from_flutter("[微笑]", 16, 16, &pixels));
         assert!(manager.has_emoji("[微笑]"));
         assert_eq!(manager.cache_size(), 1);
@@ -391,7 +393,7 @@ mod tests {
     fn test_register_invalid() {
         let manager = EmojiManager::new(100);
         let pixels = vec![255u8; 10];
-        
+
         // 尺寸为0
         assert!(!manager.register_from_flutter("[test]", 0, 16, &pixels));
         // 像素数据不足
@@ -402,7 +404,7 @@ mod tests {
     fn test_parse_text_no_emoji() {
         let manager = EmojiManager::new(100);
         let result = manager.parse_text("hello world", 24);
-        
+
         assert_eq!(result.segments.len(), 1);
         assert!(result.missing_emojis.is_empty());
         match &result.segments[0] {
@@ -417,9 +419,9 @@ mod tests {
         // 先注册一个表情
         let pixels = vec![255u8; 16 * 16 * 4];
         manager.register_from_flutter("[微笑]", 16, 16, &pixels);
-        
+
         let result = manager.parse_text("你好[微笑]世界", 24);
-        
+
         assert_eq!(result.segments.len(), 3);
         assert!(result.missing_emojis.is_empty());
     }
@@ -428,7 +430,7 @@ mod tests {
     fn test_parse_text_missing_emoji() {
         let manager = EmojiManager::new(100);
         let result = manager.parse_text("你好[不存在的表情]世界", 24);
-        
+
         assert_eq!(result.missing_emojis.len(), 1);
         assert_eq!(result.missing_emojis[0], "[不存在的表情]");
     }
@@ -436,12 +438,12 @@ mod tests {
     #[test]
     fn test_lru_eviction() {
         let manager = EmojiManager::new(3);
-        
+
         for i in 0..5 {
             let pixels = vec![255u8; 16 * 16 * 4];
             manager.register_from_flutter(&format!("[emoji{}]", i), 16, 16, &pixels);
         }
-        
+
         // 缓存容量为3，所以应该只有最后3个
         assert_eq!(manager.cache_size(), 3);
         assert!(!manager.has_emoji("[emoji0]"));
@@ -456,7 +458,7 @@ mod tests {
         let manager = EmojiManager::new(100);
         let pixels = vec![255u8; 16 * 16 * 4];
         manager.register_from_flutter("[test]", 16, 16, &pixels);
-        
+
         assert_eq!(manager.cache_size(), 1);
         manager.clear_cache();
         assert_eq!(manager.cache_size(), 0);

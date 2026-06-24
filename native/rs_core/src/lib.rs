@@ -82,10 +82,10 @@ pub mod ffi;
 
 // 重新导出常用类型
 pub use core::engine::BarrageEngine;
-pub use track::track_manager::{TrackManager, TrackType, BarrageItem};
 pub use emoji::emoji_manager::EmojiManager;
 pub use render::renderer::{BarrageRenderer, FrameBuffer};
 pub use text_effect::effects::TextEffects;
+pub use track::track_manager::{BarrageItem, TrackManager, TrackType};
 
 /// 库版本号
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
