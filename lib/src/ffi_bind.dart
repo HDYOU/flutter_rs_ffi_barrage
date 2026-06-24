@@ -20,6 +20,7 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io' show Platform;
 import 'dart:typed_data';
+import 'dart:ui' show Color;
 
 import 'package:ffi/ffi.dart';
 
@@ -57,17 +58,6 @@ typedef _EmojiBitmapCallbackNative =
     Bool Function(
       Pointer<Uint8> emojiText,
       Uint64 textLen,
-      Pointer<Uint32> outWidth,
-      Pointer<Uint32> outHeight,
-      Pointer<Pointer<Uint8>> outPixels,
-      Pointer<Uint64> outPixelLen,
-    );
-
-/// Emoji 位图请求回调的 Dart 签名
-typedef _EmojiBitmapCallbackDart =
-    bool Function(
-      Pointer<Uint8> emojiText,
-      int textLen,
       Pointer<Uint32> outWidth,
       Pointer<Uint32> outHeight,
       Pointer<Pointer<Uint8>> outPixels,
@@ -599,9 +589,6 @@ class BarrageFfiBind {
     return _instance!;
   }
 
-  /// 动态库句柄
-  final DynamicLibrary _lib;
-
   // 引擎生命周期
   final _BarrageEngineCreateDart _create;
   final _BarrageEngineDestroyDart _destroy;
@@ -637,7 +624,6 @@ class BarrageFfiBind {
     final lib = _loadLibrary();
 
     return BarrageFfiBind._withLibrary(
-      lib,
       create: lib
           .lookupFunction<_BarrageEngineCreateNative, _BarrageEngineCreateDart>(
             'barrage_engine_create',
@@ -713,8 +699,7 @@ class BarrageFfiBind {
     );
   }
 
-  BarrageFfiBind._withLibrary(
-    this._lib, {
+  BarrageFfiBind._withLibrary({
     required _BarrageEngineCreateDart create,
     required _BarrageEngineDestroyDart destroy,
     required _BarrageEngineResizeDart resize,
@@ -801,7 +786,7 @@ class BarrageFfiBind {
   ///
   /// 调用后引擎句柄失效，不可再使用。
   void destroyEngine(Pointer<_EngineHandle> engine) {
-    if (engine.isNull) {
+    if (engine == nullptr) {
       throw StateError('Cannot destroy null engine handle');
     }
     _destroy(engine);
@@ -961,7 +946,7 @@ class BarrageFfiBind {
     int height,
   ) {
     _checkEngine(engine);
-    if (pixels.isNull) {
+    if (pixels == nullptr) {
       throw ArgumentError('Pixels pointer is null');
     }
     if (width <= 0 || height <= 0) {
@@ -1098,7 +1083,7 @@ class BarrageFfiBind {
 
   /// 检查引擎句柄是否有效
   void _checkEngine(Pointer<_EngineHandle> engine) {
-    if (engine.isNull) {
+    if (engine == nullptr) {
       throw StateError(
         'Barrage engine handle is null. '
         'The engine may have been disposed or not yet created.',
@@ -1132,7 +1117,7 @@ class BarrageFfiBind {
     return ((color.red & 0xFF) << 24) |
         ((color.green & 0xFF) << 16) |
         ((color.blue & 0xFF) << 8) |
-        (color.alpha & 0xFF);
+        ((color.opacity * 255).round().clamp(0, 255));
   }
 }
 
@@ -1144,7 +1129,7 @@ class BarrageFfiBind {
 ///
 /// 异常时返回空字符串。
 String utf8DecodeFromPointer(Pointer<Uint8> ptr, int length) {
-  if (ptr.isNull || length <= 0) return '';
+  if (ptr == nullptr || length <= 0) return '';
   try {
     final bytes = ptr.asTypedList(length);
     return utf8.decode(bytes, allowMalformed: true);

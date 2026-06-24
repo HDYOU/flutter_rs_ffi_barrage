@@ -12,7 +12,6 @@ dependencies:
   flutter:
     sdk: flutter
   ffi: ^2.1.2
-  native_assets_cli: ^0.15.0
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +31,3 @@ flutter:
         ffiPlugin: true
       linux:
         ffiPlugin: true
-
-  assets:
-    - native_assets.yaml

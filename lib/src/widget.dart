@@ -486,7 +486,7 @@ class _BarragePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // 绘制背景
-    if (backgroundColor.alpha > 0) {
+    if (backgroundColor.opacity > 0) {
       final bgPaint = Paint()..color = backgroundColor;
       canvas.drawRect(Offset.zero & size, bgPaint);
     }

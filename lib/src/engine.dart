@@ -56,7 +56,8 @@ class BarrageEngine {
 
   /// FFI 层的 native 回调指针
   ///
-  /// 由 [Pointer.fromFunction] 创建，需要保持引用防止 GC。
+  /// 由 [Pointer.fromFunction] 创建，需要保持引用防止 GC 回收回调函数。
+  // ignore: unused_field
   Pointer<NativeFunction<_EmojiBitmapCallbackNative>>? _nativeCallbackPtr;
 
   /// 创建弹幕引擎
