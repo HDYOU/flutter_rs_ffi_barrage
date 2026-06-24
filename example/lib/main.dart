@@ -580,7 +580,8 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
     return TextEffectConfig(
       stroke:
           _strokeEnabled
-              ? StrokeConfig.enabled(
+              ? const StrokeConfig(
+                enabled: true,
                 width: 2.5,
                 color: Color(0xFF000000),
                 isOuter: true,
@@ -588,7 +589,8 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               : const StrokeConfig(),
       shadow:
           _shadowEnabled
-              ? ShadowConfig.enabled(
+              ? const ShadowConfig(
+                enabled: true,
                 offsetX: 3.0,
                 offsetY: 3.0,
                 blur: 0.0,
@@ -598,7 +600,8 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               : const ShadowConfig(),
       neon:
           _neonEnabled
-              ? NeonConfig.enabled(
+              ? const NeonConfig(
+                enabled: true,
                 radius: 10.0,
                 color: Color(0xFFFF00FF),
                 intensity: 0.8,
@@ -607,7 +610,8 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
               : const NeonConfig(),
       gradient:
           _gradientEnabled
-              ? GradientConfig.enabled(
+              ? const GradientConfig(
+                enabled: true,
                 type: GradientType.rainbow,
                 colors: [],
                 angle: 0.0,
@@ -649,8 +653,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: TextEffectConfig(
-          stroke: StrokeConfig.enabled(
+        textEffects: const TextEffectConfig(
+          stroke: StrokeConfig(
+            enabled: true,
             width: 3.0,
             color: Color(0xFFFF0000),
             isOuter: true,
@@ -671,8 +676,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFD700),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: TextEffectConfig(
-          shadow: ShadowConfig.enabled(
+        textEffects: const TextEffectConfig(
+          shadow: ShadowConfig(
+            enabled: true,
             offsetX: 4.0,
             offsetY: 4.0,
             blur: 0.0,
@@ -695,8 +701,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: TextEffectConfig(
-          neon: NeonConfig.enabled(
+        textEffects: const TextEffectConfig(
+          neon: NeonConfig(
+            enabled: true,
             radius: 12.0,
             color: Color(0xFF00FFFF),
             intensity: 0.9,
@@ -718,8 +725,9 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 32,
         timestamp: _controller.currentTime,
-        textEffects: TextEffectConfig(
-          gradient: GradientConfig.enabled(
+        textEffects: const TextEffectConfig(
+          gradient: GradientConfig(
+            enabled: true,
             type: GradientType.rainbow,
             colors: [],
             angle: 0.0,
@@ -740,26 +748,30 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: const Color(0xFFFFFFFF),
         fontSize: 36,
         timestamp: _controller.currentTime,
-        textEffects: TextEffectConfig(
-          stroke: StrokeConfig.enabled(
+        textEffects: const TextEffectConfig(
+          stroke: StrokeConfig(
+            enabled: true,
             width: 2.0,
             color: Color(0xFF000000),
             isOuter: true,
           ),
-          shadow: ShadowConfig.enabled(
+          shadow: ShadowConfig(
+            enabled: true,
             offsetX: 2.0,
             offsetY: 2.0,
             blur: 0.0,
             color: Color(0x60000000),
             layers: 2,
           ),
-          neon: NeonConfig.enabled(
+          neon: NeonConfig(
+            enabled: true,
             radius: 8.0,
             color: Color(0xFFFF00FF),
             intensity: 0.7,
             layers: 3,
           ),
-          gradient: GradientConfig.enabled(
+          gradient: GradientConfig(
+            enabled: true,
             type: GradientType.rainbow,
             colors: [],
             angle: 0.0,
@@ -791,8 +803,12 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
         color: _randomColor(),
         fontSize: 28,
         timestamp: _controller.currentTime,
-        textEffects: TextEffectConfig(
-          stroke: StrokeConfig.enabled(width: 2.0, color: Color(0xFF000000)),
+        textEffects: const TextEffectConfig(
+          stroke: StrokeConfig(
+            enabled: true,
+            width: 2.0,
+            color: Color(0xFF000000),
+          ),
         ),
       ),
     );
@@ -825,7 +841,11 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _strokeEnabled = value;
       _controller.setGlobalStroke(
         value
-            ? StrokeConfig.enabled(width: 2.5, color: Color(0xFF000000))
+            ? const StrokeConfig(
+              enabled: true,
+              width: 2.5,
+              color: Color(0xFF000000),
+            )
             : const StrokeConfig(),
       );
     });
@@ -836,7 +856,12 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _shadowEnabled = value;
       _controller.setGlobalShadow(
         value
-            ? ShadowConfig.enabled(offsetX: 3.0, offsetY: 3.0, layers: 3)
+            ? const ShadowConfig(
+              enabled: true,
+              offsetX: 3.0,
+              offsetY: 3.0,
+              layers: 3,
+            )
             : const ShadowConfig(),
       );
     });
@@ -847,7 +872,8 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _neonEnabled = value;
       _controller.setGlobalNeon(
         value
-            ? NeonConfig.enabled(
+            ? const NeonConfig(
+              enabled: true,
               radius: 10.0,
               color: Color(0xFFFF00FF),
               layers: 4,
@@ -862,7 +888,7 @@ class _BarrageDemoPageState extends State<BarrageDemoPage> {
       _gradientEnabled = value;
       _controller.setGlobalGradient(
         value
-            ? GradientConfig.enabled(type: GradientType.rainbow)
+            ? const GradientConfig(enabled: true, type: GradientType.rainbow)
             : const GradientConfig(),
       );
     });
