@@ -301,17 +301,91 @@ Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
   // Map Rust target to NDK toolchain prefix
   final toolchainPrefix = _ndkToolchainPrefix(rustTarget);
   final toolchainDir = await _ndkToolchainDir(ndkHome);
+  final toolchainBin = '$toolchainDir/bin';
 
   final targetEnv = _targetTripleEnv(rustTarget);
+  final ccPath = '$toolchainBin/$toolchainPrefix-clang';
+  final cxxPath = '$toolchainBin/$toolchainPrefix-clang++';
+  final arPath = '$toolchainBin/llvm-ar';
+
   final env = <String, String>{
-    'CC_$targetEnv': '$toolchainDir/bin/$toolchainPrefix-clang',
-    'CXX_$targetEnv': '$toolchainDir/bin/$toolchainPrefix-clang++',
-    'AR_$targetEnv': '$toolchainDir/bin/llvm-ar',
-    'CARGO_TARGET_${targetEnv}_LINKER':
-        '$toolchainDir/bin/$toolchainPrefix-clang',
+    // Standard cargo-cc / cc-rs variables (per-target)
+    'CC_$targetEnv': ccPath,
+    'CXX_$targetEnv': cxxPath,
+    'AR_$targetEnv': arPath,
+    'CARGO_TARGET_${targetEnv}_LINKER': ccPath,
+
+    // Also set without target suffix (some build scripts use these)
+    'TARGET_CC': ccPath,
+    'TARGET_CXX': cxxPath,
+    'TARGET_AR': arPath,
+    'CC': ccPath,
+    'CXX': cxxPath,
+    'AR': arPath,
+
+    // ANDROID_NDK_HOME for crates that read it directly
+    'ANDROID_NDK_HOME': ndkHome,
+    'NDK_HOME': ndkHome,
   };
 
+  // Add toolchain bin to PATH so cc-rs can find tools by name
+  final existingPath = Platform.environment['PATH'] ?? '';
+  env['PATH'] = '$toolchainBin:$existingPath';
+
+  // Create compatibility symlinks for cc-rs / ring build scripts.
+  // Some crates look for "arm-linux-androideabi-clang" but NDK provides
+  // "armv7a-linux-androideabi-clang" for the armv7 target.
+  await _createNdkCompatSymlinks(toolchainBin, rustTarget);
+
   return env;
+}
+
+/// Create compatibility symlinks in the NDK toolchain bin directory.
+///
+/// cc-rs and some crates (e.g. ring) look for toolchain binaries using
+/// target triple names that differ from what the NDK provides.
+/// For example, cc-rs looks for "arm-linux-androideabi-clang" for the
+/// armv7-linux-androideabi target, but the NDK ships
+/// "armv7a-linux-androideabi-clang".
+Future<void> _createNdkCompatSymlinks(
+  String toolchainBin,
+  String rustTarget,
+) async {
+  final symlinks = <String, String>{};
+
+  switch (rustTarget) {
+    case 'armv7-linux-androideabi':
+      // cc-rs looks for arm-linux-androideabi-* but NDK has armv7a-linux-androideabi-*
+      symlinks['arm-linux-androideabi-clang'] =
+          'armv7a-linux-androideabi-clang';
+      symlinks['arm-linux-androideabi-clang++'] =
+          'armv7a-linux-androideabi-clang++';
+      symlinks['arm-linux-androideabi-ar'] = 'llvm-ar';
+      symlinks['arm-linux-androideabi-ranlib'] = 'llvm-ranlib';
+    case 'aarch64-linux-android':
+      symlinks['aarch64-linux-android-ar'] = 'llvm-ar';
+      symlinks['aarch64-linux-android-ranlib'] = 'llvm-ranlib';
+    case 'x86_64-linux-android':
+      symlinks['x86_64-linux-android-ar'] = 'llvm-ar';
+      symlinks['x86_64-linux-android-ranlib'] = 'llvm-ranlib';
+    case 'i686-linux-android':
+      symlinks['i686-linux-android-ar'] = 'llvm-ar';
+      symlinks['i686-linux-android-ranlib'] = 'llvm-ranlib';
+  }
+
+  for (final entry in symlinks.entries) {
+    final linkPath = '$toolchainBin/${entry.key}';
+    final targetPath = entry.value;
+    final linkFile = Link(linkPath);
+    if (!await linkFile.exists()) {
+      try {
+        await linkFile.create(targetPath);
+        _info('🔗 Created compat symlink: ${entry.key} -> ${entry.value}');
+      } catch (e) {
+        _info('⚠️  Could not create symlink $linkPath: $e');
+      }
+    }
+  }
 }
 
 String _ndkToolchainPrefix(String rustTarget) {
