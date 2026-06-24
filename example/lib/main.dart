@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -21,7 +22,7 @@ void main() {
   };
 
   // 捕获 Dart 异步异常（未被 Zone 捕获的 Future 异常）
-  PlatformDispatcher.instance.onError = (error, stack) {
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
     _handleError(error, stack);
     return true;
   };
@@ -53,10 +54,8 @@ void _handleError(dynamic error, StackTrace? stackTrace) {
   if (ctx != null) {
     Navigator.of(ctx).push(
       MaterialPageRoute(
-        builder: (context) => CrashReportPage(
-          error: error,
-          stackTrace: stackTrace,
-        ),
+        builder:
+            (context) => CrashReportPage(error: error, stackTrace: stackTrace),
         fullscreenDialog: true,
       ),
     );

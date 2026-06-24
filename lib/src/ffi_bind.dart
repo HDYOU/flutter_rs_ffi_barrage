@@ -620,18 +620,20 @@ class BarrageFfiBind {
           .lookupFunction<_BarrageEngineCreateNative, _BarrageEngineCreateDart>(
             'barrage_engine_create',
           ),
-      destroy: lib.lookupFunction<
-        _BarrageEngineDestroyNative,
-        _BarrageEngineDestroyDart
-      >('barrage_engine_destroy'),
+      destroy: lib
+          .lookupFunction<
+            _BarrageEngineDestroyNative,
+            _BarrageEngineDestroyDart
+          >('barrage_engine_destroy'),
       resize: lib
           .lookupFunction<_BarrageEngineResizeNative, _BarrageEngineResizeDart>(
             'barrage_engine_resize',
           ),
-      setSpeed: lib.lookupFunction<
-        _BarrageEngineSetSpeedNative,
-        _BarrageEngineSetSpeedDart
-      >('barrage_engine_set_speed'),
+      setSpeed: lib
+          .lookupFunction<
+            _BarrageEngineSetSpeedNative,
+            _BarrageEngineSetSpeedDart
+          >('barrage_engine_set_speed'),
       pause: lib
           .lookupFunction<_BarrageEnginePauseNative, _BarrageEnginePauseDart>(
             'barrage_engine_pause',
@@ -652,26 +654,31 @@ class BarrageFfiBind {
           .lookupFunction<_BarrageEnginePushNative, _BarrageEnginePushDart>(
             'barrage_engine_push',
           ),
-      renderFrame: lib.lookupFunction<
-        _BarrageEngineRenderFrameNative,
-        _BarrageEngineRenderFrameDart
-      >('barrage_engine_render_frame'),
-      setEmojiBitmapCallback: lib.lookupFunction<
-        _SetEmojiBitmapCallbackNative,
-        _SetEmojiBitmapCallbackDart
-      >('set_emoji_bitmap_callback'),
-      registerEmojiFromFlutter: lib.lookupFunction<
-        _RegisterEmojiFromFlutterNative,
-        _RegisterEmojiFromFlutterDart
-      >('register_emoji_from_flutter'),
-      registerEmojiFromLocalPath: lib.lookupFunction<
-        _RegisterEmojiFromLocalPathNative,
-        _RegisterEmojiFromLocalPathDart
-      >('register_emoji_from_local_path'),
-      registerEmojiFromUrl: lib.lookupFunction<
-        _RegisterEmojiFromUrlNative,
-        _RegisterEmojiFromUrlDart
-      >('register_emoji_from_url'),
+      renderFrame: lib
+          .lookupFunction<
+            _BarrageEngineRenderFrameNative,
+            _BarrageEngineRenderFrameDart
+          >('barrage_engine_render_frame'),
+      setEmojiBitmapCallback: lib
+          .lookupFunction<
+            _SetEmojiBitmapCallbackNative,
+            _SetEmojiBitmapCallbackDart
+          >('set_emoji_bitmap_callback'),
+      registerEmojiFromFlutter: lib
+          .lookupFunction<
+            _RegisterEmojiFromFlutterNative,
+            _RegisterEmojiFromFlutterDart
+          >('register_emoji_from_flutter'),
+      registerEmojiFromLocalPath: lib
+          .lookupFunction<
+            _RegisterEmojiFromLocalPathNative,
+            _RegisterEmojiFromLocalPathDart
+          >('register_emoji_from_local_path'),
+      registerEmojiFromUrl: lib
+          .lookupFunction<
+            _RegisterEmojiFromUrlNative,
+            _RegisterEmojiFromUrlDart
+          >('register_emoji_from_url'),
       setGlobalStroke: lib
           .lookupFunction<_SetGlobalStrokeNative, _SetGlobalStrokeDart>(
             'set_global_stroke',
@@ -688,14 +695,16 @@ class BarrageFfiBind {
           .lookupFunction<_SetGlobalGradientNative, _SetGlobalGradientDart>(
             'set_global_gradient',
           ),
-      version: lib.lookupFunction<
-        _BarrageEngineVersionNative,
-        _BarrageEngineVersionDart
-      >('barrage_engine_version'),
-      aliveCount: lib.lookupFunction<
-        _BarrageEngineAliveCountNative,
-        _BarrageEngineAliveCountDart
-      >('barrage_engine_alive_count'),
+      version: lib
+          .lookupFunction<
+            _BarrageEngineVersionNative,
+            _BarrageEngineVersionDart
+          >('barrage_engine_version'),
+      aliveCount: lib
+          .lookupFunction<
+            _BarrageEngineAliveCountNative,
+            _BarrageEngineAliveCountDart
+          >('barrage_engine_alive_count'),
     );
   }
 

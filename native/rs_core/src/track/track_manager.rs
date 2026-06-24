@@ -767,7 +767,14 @@ mod tests {
     #[test]
     fn test_push_barrage() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        let result = manager.push("测试弹幕".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        let result = manager.push(
+            "测试弹幕".to_string(),
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         assert!(result);
         assert_eq!(manager.alive_count(), 1);
     }
@@ -775,7 +782,14 @@ mod tests {
     #[test]
     fn test_update_barrage() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        manager.push(
+            "测试".to_string(),
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
 
         let items = manager.get_all_alive();
         let initial_x = items[0].x;
@@ -789,8 +803,22 @@ mod tests {
     #[test]
     fn test_clear() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        manager.push("测试1".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
-        manager.push("测试2".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Top, TextEffects::default());
+        manager.push(
+            "测试1".to_string(),
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
+        manager.push(
+            "测试2".to_string(),
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Top,
+            TextEffects::default(),
+        );
 
         assert_eq!(manager.alive_count(), 2);
 
@@ -801,7 +829,14 @@ mod tests {
     #[test]
     fn test_resize() {
         let mut manager = TrackManager::new(800.0, 600.0);
-        manager.push("测试".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        manager.push(
+            "测试".to_string(),
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
 
         let count_before = manager.scroll_track_count();
         manager.resize(1920.0, 1080.0);

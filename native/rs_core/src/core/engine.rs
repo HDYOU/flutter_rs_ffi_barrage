@@ -409,7 +409,14 @@ mod tests {
     #[test]
     fn test_push_barrage() {
         let mut engine = BarrageEngine::new(800, 600);
-        let result = engine.push("测试弹幕", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        let result = engine.push(
+            "测试弹幕",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         assert!(result);
         assert_eq!(engine.alive_count(), 1);
     }
@@ -429,7 +436,14 @@ mod tests {
     #[test]
     fn test_seek() {
         let mut engine = BarrageEngine::new(800, 600);
-        engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        engine.push(
+            "测试",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         assert_eq!(engine.alive_count(), 1);
 
         engine.seek(10000);
@@ -440,8 +454,22 @@ mod tests {
     #[test]
     fn test_clear() {
         let mut engine = BarrageEngine::new(800, 600);
-        engine.push("测试1", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
-        engine.push("测试2", 0xFFFFFFFF, 24, 0, TrackType::Top, TextEffects::default());
+        engine.push(
+            "测试1",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
+        engine.push(
+            "测试2",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Top,
+            TextEffects::default(),
+        );
 
         assert_eq!(engine.alive_count(), 2);
 
@@ -463,11 +491,25 @@ mod tests {
         engine.add_filter_keyword("屏蔽词");
 
         // 包含屏蔽词的弹幕应该被过滤
-        let result = engine.push("这是屏蔽词测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        let result = engine.push(
+            "这是屏蔽词测试",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         assert!(!result);
 
         // 不包含屏蔽词的应该通过
-        let result = engine.push("正常弹幕", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        let result = engine.push(
+            "正常弹幕",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         assert!(result);
     }
 
@@ -476,18 +518,38 @@ mod tests {
         let mut engine = BarrageEngine::new(800, 600);
         engine.filter.block_top = true;
 
-        let result = engine.push("顶部弹幕", 0xFFFFFFFF, 24, 0, TrackType::Top, TextEffects::default());
+        let result = engine.push(
+            "顶部弹幕",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Top,
+            TextEffects::default(),
+        );
         assert!(!result);
 
-        let result = engine.push("滚动弹幕", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        let result = engine.push(
+            "滚动弹幕",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         assert!(result);
     }
 
     #[test]
     fn test_async_push() {
         let engine = BarrageEngine::new(800, 600);
-        let result =
-            engine.push_async("异步弹幕".to_string(), 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        let result = engine.push_async(
+            "异步弹幕".to_string(),
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         assert!(result);
     }
 
@@ -501,7 +563,14 @@ mod tests {
     #[test]
     fn test_update() {
         let mut engine = BarrageEngine::new(800, 600);
-        engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        engine.push(
+            "测试",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
 
         let count = engine.update(1000);
         assert!(count > 0);

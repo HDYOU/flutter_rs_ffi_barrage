@@ -34,11 +34,7 @@ class CrashReportPage extends StatefulWidget {
   final dynamic error;
   final StackTrace? stackTrace;
 
-  const CrashReportPage({
-    super.key,
-    required this.error,
-    this.stackTrace,
-  });
+  const CrashReportPage({super.key, required this.error, this.stackTrace});
 
   @override
   State<CrashReportPage> createState() => _CrashReportPageState();
@@ -92,11 +88,7 @@ class _CrashReportPageState extends State<CrashReportPage>
         backgroundColor: const Color(0xFFE74C3C),
         foregroundColor: Colors.white,
         title: const Row(
-          children: [
-            Icon(Icons.bug_report),
-            SizedBox(width: 8),
-            Text('应用异常'),
-          ],
+          children: [Icon(Icons.bug_report), SizedBox(width: 8), Text('应用异常')],
         ),
         actions: [
           IconButton(
@@ -110,18 +102,12 @@ class _CrashReportPageState extends State<CrashReportPage>
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: '当前异常'),
-            Tab(text: '历史记录'),
-          ],
+          tabs: const [Tab(text: '当前异常'), Tab(text: '历史记录')],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildCurrentError(),
-          _buildHistoryList(),
-        ],
+        children: [_buildCurrentError(), _buildHistoryList()],
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -197,7 +183,7 @@ class _CrashReportPageState extends State<CrashReportPage>
               color: const Color(0xFF2D2D44),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: const Color(0xFFE74C3C).withOpacity(0.3),
+                color: const Color(0xFFE74C3C).withValues(alpha: 0.3),
               ),
             ),
             child: Text(
@@ -257,10 +243,7 @@ class _CrashReportPageState extends State<CrashReportPage>
               ),
             )
           else
-            const Text(
-              '无堆栈信息',
-              style: TextStyle(color: Colors.white54),
-            ),
+            const Text('无堆栈信息', style: TextStyle(color: Colors.white54)),
         ],
       ),
     );
@@ -324,9 +307,10 @@ class _CrashReportPageState extends State<CrashReportPage>
             color: const Color(0xFF2D2D44),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isLatest
-                  ? const Color(0xFFE74C3C).withOpacity(0.5)
-                  : Colors.white10,
+              color:
+                  isLatest
+                      ? const Color(0xFFE74C3C).withValues(alpha: 0.5)
+                      : Colors.white10,
             ),
           ),
           child: ListTile(
@@ -364,43 +348,47 @@ class _CrashReportPageState extends State<CrashReportPage>
   void _showCrashDetail(BuildContext context, CrashInfo crash) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(crash.error.runtimeType.toString()),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                crash.error.toString(),
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-              ),
-              if (crash.stackTrace != null) ...[
-                const SizedBox(height: 12),
-                const Text(
-                  '堆栈跟踪:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  crash.stackTrace.toString(),
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    color: Colors.grey,
+      builder:
+          (context) => AlertDialog(
+            title: Text(crash.error.runtimeType.toString()),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    crash.error.toString(),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                    ),
                   ),
-                ),
-              ],
+                  if (crash.stackTrace != null) ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      '堆栈跟踪:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      crash.stackTrace.toString(),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
     );
   }
 }

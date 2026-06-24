@@ -407,8 +407,9 @@ class _BarrageViewState extends State<BarrageView>
   void _onTick(Duration elapsed) {
     if (_controller.isDisposed) return;
 
-    final delta =
-        _lastTick == Duration.zero ? 0 : (elapsed - _lastTick).inMilliseconds;
+    final delta = _lastTick == Duration.zero
+        ? 0
+        : (elapsed - _lastTick).inMilliseconds;
     _lastTick = elapsed;
 
     // 更新帧

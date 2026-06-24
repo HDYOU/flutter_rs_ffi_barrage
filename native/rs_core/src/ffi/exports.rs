@@ -317,7 +317,10 @@ pub unsafe extern "C" fn barrage_engine_push(
 
     // 描边效果
     if stroke_enabled {
-        if stroke_width.is_nan() || stroke_width.is_infinite() || !(0.0..=50.0).contains(&stroke_width) {
+        if stroke_width.is_nan()
+            || stroke_width.is_infinite()
+            || !(0.0..=50.0).contains(&stroke_width)
+        {
             return false;
         }
         effects.stroke.enabled = true;
@@ -327,13 +330,22 @@ pub unsafe extern "C" fn barrage_engine_push(
 
     // 阴影效果
     if shadow_enabled {
-        if shadow_offset_x.is_nan() || shadow_offset_x.is_infinite() || shadow_offset_x.abs() > 100.0 {
+        if shadow_offset_x.is_nan()
+            || shadow_offset_x.is_infinite()
+            || shadow_offset_x.abs() > 100.0
+        {
             return false;
         }
-        if shadow_offset_y.is_nan() || shadow_offset_y.is_infinite() || shadow_offset_y.abs() > 100.0 {
+        if shadow_offset_y.is_nan()
+            || shadow_offset_y.is_infinite()
+            || shadow_offset_y.abs() > 100.0
+        {
             return false;
         }
-        if shadow_blur.is_nan() || shadow_blur.is_infinite() || !(0.0..=100.0).contains(&shadow_blur) {
+        if shadow_blur.is_nan()
+            || shadow_blur.is_infinite()
+            || !(0.0..=100.0).contains(&shadow_blur)
+        {
             return false;
         }
         effects.shadow.enabled = true;
@@ -345,10 +357,16 @@ pub unsafe extern "C" fn barrage_engine_push(
 
     // 霓虹效果
     if neon_enabled {
-        if neon_radius.is_nan() || neon_radius.is_infinite() || !(0.0..=200.0).contains(&neon_radius) {
+        if neon_radius.is_nan()
+            || neon_radius.is_infinite()
+            || !(0.0..=200.0).contains(&neon_radius)
+        {
             return false;
         }
-        if neon_intensity.is_nan() || neon_intensity.is_infinite() || !(0.0..=3.0).contains(&neon_intensity) {
+        if neon_intensity.is_nan()
+            || neon_intensity.is_infinite()
+            || !(0.0..=3.0).contains(&neon_intensity)
+        {
             return false;
         }
         effects.neon.enabled = true;
@@ -380,7 +398,8 @@ pub unsafe extern "C" fn barrage_engine_push(
                 return false;
             }
 
-            let colors_slice = std::slice::from_raw_parts(gradient_colors_ptr, gradient_colors_len as usize);
+            let colors_slice =
+                std::slice::from_raw_parts(gradient_colors_ptr, gradient_colors_len as usize);
             let colors: Vec<u32> = colors_slice.to_vec();
 
             // 生成均匀分布的 stops
@@ -886,10 +905,23 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
-                false, 0.0, 0,          // stroke
-                false, 0.0, 0.0, 0.0, 0, // shadow
-                false, 0.0, 0, 0.0,     // neon
-                false, 0, std::ptr::null(), 0, 0.0, // gradient
+                false,
+                0.0,
+                0, // stroke
+                false,
+                0.0,
+                0.0,
+                0.0,
+                0, // shadow
+                false,
+                0.0,
+                0,
+                0.0, // neon
+                false,
+                0,
+                std::ptr::null(),
+                0,
+                0.0, // gradient
             );
             assert!(!result);
 
@@ -914,21 +946,56 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
-                false, 0.0, 0,          // stroke
-                false, 0.0, 0.0, 0.0, 0, // shadow
-                false, 0.0, 0, 0.0,     // neon
-                false, 0, std::ptr::null(), 0, 0.0, // gradient
+                false,
+                0.0,
+                0, // stroke
+                false,
+                0.0,
+                0.0,
+                0.0,
+                0, // shadow
+                false,
+                0.0,
+                0,
+                0.0, // neon
+                false,
+                0,
+                std::ptr::null(),
+                0,
+                0.0, // gradient
             )
         };
         assert!(result);
 
         // 空文本
-        let result = unsafe { barrage_engine_push(engine, b"".as_ptr(), 0, 0, 0xFFFFFFFF, 24, 0,
-            false, 0.0, 0,
-            false, 0.0, 0.0, 0.0, 0,
-            false, 0.0, 0, 0.0,
-            false, 0, std::ptr::null(), 0, 0.0,
-        ) };
+        let result = unsafe {
+            barrage_engine_push(
+                engine,
+                b"".as_ptr(),
+                0,
+                0,
+                0xFFFFFFFF,
+                24,
+                0,
+                false,
+                0.0,
+                0,
+                false,
+                0.0,
+                0.0,
+                0.0,
+                0,
+                false,
+                0.0,
+                0,
+                0.0,
+                false,
+                0,
+                std::ptr::null(),
+                0,
+                0.0,
+            )
+        };
         assert!(!result);
 
         unsafe { barrage_engine_destroy(engine) };
@@ -950,10 +1017,23 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
-                false, 0.0, 0,
-                false, 0.0, 0.0, 0.0, 0,
-                false, 0.0, 0, 0.0,
-                false, 0, std::ptr::null(), 0, 0.0,
+                false,
+                0.0,
+                0,
+                false,
+                0.0,
+                0.0,
+                0.0,
+                0,
+                false,
+                0.0,
+                0,
+                0.0,
+                false,
+                0,
+                std::ptr::null(),
+                0,
+                0.0,
             );
         }
 
@@ -1043,10 +1123,23 @@ mod tests {
                 0xFFFFFFFF,
                 24,
                 0,
-                false, 0.0, 0,
-                false, 0.0, 0.0, 0.0, 0,
-                false, 0.0, 0, 0.0,
-                false, 0, std::ptr::null(), 0, 0.0,
+                false,
+                0.0,
+                0,
+                false,
+                0.0,
+                0.0,
+                0.0,
+                0,
+                false,
+                0.0,
+                0,
+                0.0,
+                false,
+                0,
+                std::ptr::null(),
+                0,
+                0.0,
             );
         }
 

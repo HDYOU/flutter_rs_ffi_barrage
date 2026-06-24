@@ -708,7 +708,14 @@ mod tests {
         let mut renderer = BarrageRenderer::new(200, 200);
         let mut engine = BarrageEngine::new(200, 200);
 
-        engine.push("测试", 0xFFFFFFFF, 24, 0, TrackType::Scroll, TextEffects::default());
+        engine.push(
+            "测试",
+            0xFFFFFFFF,
+            24,
+            0,
+            TrackType::Scroll,
+            TextEffects::default(),
+        );
         engine.update(0);
 
         let mut buffer = vec![0u32; 200 * 200];
