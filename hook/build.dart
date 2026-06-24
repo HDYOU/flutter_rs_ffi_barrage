@@ -303,10 +303,22 @@ Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
   final toolchainDir = await _ndkToolchainDir(ndkHome);
   final toolchainBin = '$toolchainDir/bin';
 
+  // Find actual clang binary (NDK r23+ may include API level in the name,
+  // e.g. armv7a-linux-androideabi21-clang instead of just
+  // armv7a-linux-androideabi-clang).
+  final clangBinary = await _findClangBinary(toolchainBin, toolchainPrefix);
+  final clangxxBinary = clangBinary.replaceFirst(
+    RegExp(r'-clang$'),
+    '-clang++',
+  );
+
   final targetEnv = _targetTripleEnv(rustTarget);
-  final ccPath = '$toolchainBin/$toolchainPrefix-clang';
-  final cxxPath = '$toolchainBin/$toolchainPrefix-clang++';
+  final ccPath = '$toolchainBin/$clangBinary';
+  final cxxPath = '$toolchainBin/$clangxxBinary';
   final arPath = '$toolchainBin/llvm-ar';
+
+  _info('🔧 CC:  $clangBinary');
+  _info('🔧 CXX: $clangxxBinary');
 
   final env = <String, String>{
     // Standard cargo-cc / cc-rs variables (per-target)
@@ -333,11 +345,67 @@ Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
   env['PATH'] = '$toolchainBin:$existingPath';
 
   // Create compatibility symlinks for cc-rs / ring build scripts.
-  // Some crates look for "arm-linux-androideabi-clang" but NDK provides
-  // "armv7a-linux-androideabi-clang" for the armv7 target.
-  await _createNdkCompatSymlinks(toolchainBin, rustTarget);
+  // Some crates look for tool names that differ from what the NDK provides.
+  await _createNdkCompatSymlinks(
+    toolchainBin,
+    rustTarget,
+    clangBinary,
+    clangxxBinary,
+  );
 
   return env;
+}
+
+/// Find the actual clang binary for a given target prefix in the NDK.
+///
+/// NDK r23+ ships clang binaries with API level suffixes
+/// (e.g. `armv7a-linux-androideabi21-clang`). This function scans
+/// the toolchain bin directory to find the highest available API level
+/// for the given prefix.
+Future<String> _findClangBinary(
+  String toolchainBin,
+  String toolchainPrefix,
+) async {
+  final binDir = Directory(toolchainBin);
+  if (!await binDir.exists()) {
+    // Fallback: just return the prefix + -clang
+    return '${toolchainPrefix}-clang';
+  }
+
+  String? bestMatch;
+  int bestApiLevel = -1;
+
+  await for (final entity in binDir.list()) {
+    if (entity is! File) continue;
+    final name = entity.uri.pathSegments.lastWhere(
+      (s) => s.isNotEmpty,
+      orElse: () => '',
+    );
+    if (name.isEmpty) continue;
+
+    // Match patterns like:
+    //   armv7a-linux-androideabi-clang
+    //   armv7a-linux-androideabi21-clang
+    //   armv7a-linux-androideabi33-clang
+    final pattern = RegExp('^${RegExp.escape(toolchainPrefix)}(\\d*)-clang\$');
+    final match = pattern.firstMatch(name);
+    if (match != null) {
+      final apiLevelStr = match.group(1) ?? '';
+      final apiLevel = apiLevelStr.isEmpty ? 0 : int.tryParse(apiLevelStr) ?? 0;
+
+      if (apiLevel > bestApiLevel) {
+        bestApiLevel = apiLevel;
+        bestMatch = name;
+      }
+    }
+  }
+
+  if (bestMatch != null) {
+    return bestMatch;
+  }
+
+  // Fallback: try the exact prefix + -clang
+  return '${toolchainPrefix}-clang';
 }
 
 /// Create compatibility symlinks in the NDK toolchain bin directory.
@@ -346,31 +414,40 @@ Future<Map<String, String>> _checkAndroidNdkAndGetEnv(String rustTarget) async {
 /// target triple names that differ from what the NDK provides.
 /// For example, cc-rs looks for "arm-linux-androideabi-clang" for the
 /// armv7-linux-androideabi target, but the NDK ships
-/// "armv7a-linux-androideabi-clang".
+/// "armv7a-linux-androideabiNN-clang" (with API level suffix).
 Future<void> _createNdkCompatSymlinks(
   String toolchainBin,
   String rustTarget,
+  String clangBinary,
+  String clangxxBinary,
 ) async {
   final symlinks = <String, String>{};
 
   switch (rustTarget) {
     case 'armv7-linux-androideabi':
-      // cc-rs looks for arm-linux-androideabi-* but NDK has armv7a-linux-androideabi-*
-      symlinks['arm-linux-androideabi-clang'] =
-          'armv7a-linux-androideabi-clang';
-      symlinks['arm-linux-androideabi-clang++'] =
-          'armv7a-linux-androideabi-clang++';
+      // cc-rs looks for arm-linux-androideabi-* but NDK has armv7a-linux-androideabi*-*
+      symlinks['arm-linux-androideabi-clang'] = clangBinary;
+      symlinks['arm-linux-androideabi-clang++'] = clangxxBinary;
       symlinks['arm-linux-androideabi-ar'] = 'llvm-ar';
       symlinks['arm-linux-androideabi-ranlib'] = 'llvm-ranlib';
+      // Also add versionless symlink (e.g. armv7a-linux-androideabi-clang -> armv7a-linux-androideabi33-clang)
+      symlinks['armv7a-linux-androideabi-clang'] = clangBinary;
+      symlinks['armv7a-linux-androideabi-clang++'] = clangxxBinary;
     case 'aarch64-linux-android':
       symlinks['aarch64-linux-android-ar'] = 'llvm-ar';
       symlinks['aarch64-linux-android-ranlib'] = 'llvm-ranlib';
+      symlinks['aarch64-linux-android-clang'] = clangBinary;
+      symlinks['aarch64-linux-android-clang++'] = clangxxBinary;
     case 'x86_64-linux-android':
       symlinks['x86_64-linux-android-ar'] = 'llvm-ar';
       symlinks['x86_64-linux-android-ranlib'] = 'llvm-ranlib';
+      symlinks['x86_64-linux-android-clang'] = clangBinary;
+      symlinks['x86_64-linux-android-clang++'] = clangxxBinary;
     case 'i686-linux-android':
       symlinks['i686-linux-android-ar'] = 'llvm-ar';
       symlinks['i686-linux-android-ranlib'] = 'llvm-ranlib';
+      symlinks['i686-linux-android-clang'] = clangBinary;
+      symlinks['i686-linux-android-clang++'] = clangxxBinary;
   }
 
   for (final entry in symlinks.entries) {
