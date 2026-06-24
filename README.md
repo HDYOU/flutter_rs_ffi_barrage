@@ -162,7 +162,7 @@
 
 | 依赖 | 版本要求 | 说明 |
 |------|---------|------|
-| Flutter SDK | `^3.41.0` | 需支持 native-assets 稳定 API |
+| Flutter SDK | `>=3.41.0` | 需支持 native-assets 稳定 API |
 | Dart SDK | `>=3.7.0 <4.0.0` | 与 Flutter 3.41.0 配套 |
 | Rust 工具链 | stable（最新稳定版） | 通过 rustup 安装 |
 
@@ -1256,9 +1256,9 @@ Dart 侧 `ffi_bind.dart` 中也对所有传入 Rust 的指针做空值校验。
 
 ## 📝 版本约束
 
-### Flutter ^3.41.0 适配说明
+### Flutter >=3.41.0 适配说明
 
-本插件要求 Flutter SDK 版本 `^3.41.0`，主要依赖以下特性：
+本插件要求 Flutter SDK 版本 `>=3.41.0`，主要依赖以下特性：
 
 1. **Native Assets 稳定 API**
    - Flutter 3.41.0 中 native-assets 机制达到稳定状态
