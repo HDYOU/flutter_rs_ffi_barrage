@@ -34,10 +34,11 @@ fn main() {
     }
 
     // Windows-specific configuration
+    // Note: #[no_mangle] + pub extern "C" on cdylib automatically exports
+    // all FFI symbols on Windows (both MSVC and GNU toolchains).
+    // No explicit linker args needed.
     if target_os == "windows" {
         println!("cargo:rustc-cfg=platform_windows");
-        // On Windows, we need to ensure the cdylib exports all symbols
-        println!("cargo:rustc-link-arg=/EXPORT:set_emoji_bitmap_callback");
     }
 
     // macOS-specific configuration
