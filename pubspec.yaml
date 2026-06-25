@@ -1,6 +1,7 @@
 name: flutter_rs_ffi_barrage
 description: A high-performance Flutter barrage plugin powered by Rust FFI via flutter_rust_bridge.
 version: 1.0.0
+publish_to: 'none'
 repository: https://github.com/HDYOU/flutter_rs_ffi_barrage
 issue_tracker: https://github.com/HDYOU/flutter_rs_ffi_barrage/issues
 
@@ -11,6 +12,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  rust_lib_flutter_rs_ffi_barrage:
+    path: rust_builder
   flutter_rust_bridge: ^2.0.0
 
 dev_dependencies:
