@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter_rs_ffi_barrage/src/rust/api/engine.dart' as api;
 import 'package:flutter_rs_ffi_barrage/src/rust/api/common.dart' as common;
 import 'package:flutter_rs_ffi_barrage/src/rust/core/engine.dart' as core;
-import 'package:flutter_rs_ffi_barrage/src/rust/frb_generated.dart';
 
 typedef EmojiBitmapCallback =
     Uint8List? Function(String emojiText, int width, int height);
@@ -15,9 +14,8 @@ class BarrageEngine {
   bool _disposed = false;
 
   BarrageEngine({required int width, required int height})
-    : _width = width,
-      _height = height {
-    RustLib.instance;
+      : _width = width,
+        _height = height {
     _handle = api.EngineHandle.create(width: width, height: height);
   }
 
@@ -112,8 +110,4 @@ class BarrageEngine {
     if (_disposed) return;
     _disposed = true;
   }
-}
-
-void initializeRustLib() {
-  RustLib.instance;
 }

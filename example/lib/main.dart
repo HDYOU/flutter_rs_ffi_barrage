@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_rs_ffi_barrage/flutter_rs_ffi_barrage.dart';
 
-void main() {
-  initializeRustLib();
+Future<void> main() async {
+  await RustLib.init();
   runApp(const BarrageDemoApp());
 }
 

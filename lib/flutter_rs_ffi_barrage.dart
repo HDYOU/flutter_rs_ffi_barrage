@@ -1,7 +1,8 @@
 library flutter_rs_ffi_barrage;
 
-export 'src/engine.dart' show BarrageEngine, initializeRustLib;
+export 'src/engine.dart' show BarrageEngine;
 export 'src/widget.dart' show BarrageController, BarrageView;
+export 'package:flutter_rs_ffi_barrage/src/rust/frb_generated.dart' show RustLib;
 export 'package:flutter_rs_ffi_barrage/src/rust/api/common.dart'
     show
         BarrageMsg,
